@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio Deployment Dashboard — €300,000</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f8f8f6;
+      --surface: #ffffff;
+      --border: #e5e5e2;
+      --text: #1a1a18;
+      --muted: #6b6b66;
+      --subtle: #9b9b96;
+      --equity: #2563eb;
+      --energy: #0ea5e9;
+      --defensive: #059669;
+      --realasset: #d97706;
+      --staging: #8b5cf6;
+      --cash-perm: #16a34a;
+      --waiting: #9ca3af;
+      --fired: #d97706;
+      --completed: #16a34a;
+      --overdue: #dc2626;
+      --warn-bg: #fefce8;
+      --warn-border: #fbbf24;
+      --crash-bg: #fef2f2;
+      --crash-border: #dc2626;
+      --accent: #1d4ed8;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+    h1 { font-size: 1.25rem; font-weight: 600; }
+    h2 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; }
+    h3 { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .app { max-width: 1400px; margin: 0 auto; padding: 1rem; }
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 1rem; }
+    .header-left { display: flex; align-items: center; gap: 0.75rem; }
+    .header-right { display: flex; gap: 0.5rem; }
+    .tab-bar { display: flex; gap: 0.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.25rem; margin-bottom: 1rem; }
+    .tab { padding: 0.375rem 0.875rem; border-radius: 6px; border: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: all 0.15s; }
+    .tab.active { background: var(--text); color: white; }
+    .tab:hover:not(.active) { background: var(--bg); color: var(--text); }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; }
+    .card.action-card { border-color: var(--accent); background: #eff6ff; }
+    .card.warn-card { border-color: var(--warn-border); background: var(--warn-bg); }
+    .card-label { font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.25rem; }
+    .card-value { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+    .card-sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+    .card-action-text { font-size: 0.875rem; font-weight: 500; color: var(--accent); line-height: 1.4; }
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; }
+    .banner { border-radius: 8px; padding: 0.875rem 1.25rem; margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.75rem; }
+    .banner.crash { background: var(--crash-bg); border: 1.5px solid var(--crash-border); }
+    .banner.warn { background: var(--warn-bg); border: 1.5px solid var(--warn-border); }
+    .banner-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .banner-text strong { display: block; font-weight: 600; margin-bottom: 0.125rem; }
+    .banner-text p { font-size: 0.8125rem; color: var(--muted); }
+    .trigger-ladder { display: flex; flex-direction: column; gap: 0.5rem; }
+    .trigger { border: 1px solid var(--border); border-radius: 8px; padding: 0.875rem 1rem; display: flex; align-items: center; gap: 1rem; }
+    .trigger.waiting { border-color: var(--border); }
+    .trigger.fired { border-color: var(--fired); background: #fffbeb; }
+    .trigger.completed { border-color: var(--completed); background: #f0fdf4; opacity: 0.75; }
+    .trigger.overdue { border-color: var(--overdue); background: #fef2f2; }
+    .trigger-badge { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
+    .trigger-badge.waiting { background: #f3f4f6; color: var(--muted); }
+    .trigger-badge.fired { background: #fbbf24; color: white; }
+    .trigger-badge.completed { background: var(--completed); color: white; }
+    .trigger-badge.overdue { background: var(--overdue); color: white; }
+    .trigger-info { flex: 1; }
+    .trigger-pct { font-size: 1rem; font-weight: 700; }
+    .trigger-detail { font-size: 0.75rem; color: var(--muted); }
+    .trigger-status-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.125rem 0.5rem; border-radius: 10px; }
+    .trigger-status-label.waiting { background: #f3f4f6; color: var(--muted); }
+    .trigger-status-label.fired { background: #fef3c7; color: #92400e; }
+    .trigger-status-label.completed { background: #dcfce7; color: #166534; }
+    .trigger-status-label.overdue { background: #fee2e2; color: #991b1b; }
+    .btn { padding: 0.375rem 0.875rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-size: 0.8125rem; font-weight: 500; transition: all 0.15s; white-space: nowrap; }
+    .btn:hover { background: var(--bg); }
+    .btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn.primary:hover { background: #1e40af; }
+    .btn.danger { background: #dc2626; color: white; border-color: #dc2626; }
+    .btn.small { padding: 0.25rem 0.625rem; font-size: 0.75rem; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .checklist { display: flex; flex-direction: column; gap: 0.625rem; }
+    .checklist-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 8px; }
+    .checklist-item.urgent { border-color: var(--overdue); background: #fef2f2; }
+    .checklist-item.action { border-color: var(--accent); background: #eff6ff; }
+    .checklist-item.info { border-color: var(--border); background: #fafafa; }
+    .checklist-num { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: white; font-size: 0.6875rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .checklist-num.urgent { background: var(--overdue); }
+    .checklist-num.info { background: var(--muted); }
+    .checklist-text { font-size: 0.875rem; line-height: 1.5; flex: 1; }
+    .checklist-text strong { font-weight: 600; }
+    .allocation-bars { display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap; }
+    .bar-group { flex: 1; min-width: 120px; }
+    .bar-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 0.5rem; text-align: center; }
+    .bar-container { height: 280px; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; border-bottom: 2px solid var(--border); }
+    .bar-segment { border-radius: 2px 2px 0 0; display: flex; align-items: center; justify-content: center; transition: height 0.3s ease; position: relative; overflow: hidden; }
+    .bar-segment-label { font-size: 0.6rem; font-weight: 600; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; }
+    .bar-legend { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.25rem; font-size: 0.6875rem; color: var(--muted); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+    .timeline { position: relative; padding: 1rem 0; }
+    .timeline-track { display: flex; align-items: center; gap: 0; overflow-x: auto; padding-bottom: 1rem; }
+    .timeline-month { flex-shrink: 0; width: 52px; }
+    .timeline-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); margin: 0 auto 4px; transition: all 0.2s; cursor: pointer; }
+    .timeline-dot.completed { background: var(--completed); border-color: var(--completed); }
+    .timeline-dot.current { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 3px #bfdbfe; }
+    .timeline-dot.future { background: var(--surface); border-color: var(--border); }
+    .timeline-label { font-size: 0.625rem; color: var(--muted); text-align: center; }
+    .timeline-amount { font-size: 0.5625rem; color: var(--muted); text-align: center; }
+    .timeline-connector { flex: 1; height: 2px; background: var(--border); min-width: 2px; }
+    .timeline-connector.completed { background: var(--completed); }
+    .scenario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+    .scenario-card { border: 2px solid var(--border); border-radius: 8px; padding: 1rem; cursor: pointer; transition: all 0.15s; }
+    .scenario-card.selected { border-color: var(--accent); background: #eff6ff; }
+    .scenario-card:hover:not(.selected) { border-color: var(--muted); }
+    .scenario-card h3 { font-size: 0.875rem; margin-bottom: 0.25rem; }
+    .scenario-card p { font-size: 0.75rem; color: var(--muted); }
+    .scenario-result { background: #f8f8f6; border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; }
+    .scenario-result h3 { margin-bottom: 0.75rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1.5px solid var(--border); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--bg); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg); }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .gap-bar { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; margin-top: 3px; }
+    .gap-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+    .progress-bar { height: 10px; border-radius: 5px; background: var(--border); overflow: hidden; margin-top: 4px; }
+    .progress-fill { height: 100%; border-radius: 5px; background: var(--accent); transition: width 0.3s; }
+    .input-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+    .input-row label { font-size: 0.8125rem; color: var(--muted); width: 180px; flex-shrink: 0; }
+    .input-row input, .input-row select { padding: 0.375rem 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.8125rem; background: var(--surface); color: var(--text); width: 180px; }
+    .input-row input:focus, .input-row select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+    .flow-diagram { display: flex; flex-direction: column; gap: 0.75rem; }
+    .flow-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .flow-node { border-radius: 6px; padding: 0.5rem 0.875rem; font-size: 0.8125rem; font-weight: 500; border: 1px solid; }
+    .flow-node.total { background: #1e293b; color: white; border-color: #1e293b; }
+    .flow-node.invested { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+    .flow-node.staging { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
+    .flow-node.dca { background: #e0f2fe; color: #0369a1; border-color: #7dd3fc; }
+    .flow-node.drawdown { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+    .flow-node.reserve { background: #dcfce7; color: #166534; border-color: #86efac; }
+    .flow-node.asset { font-size: 0.75rem; padding: 0.375rem 0.75rem; }
+    .flow-arrow { color: var(--muted); font-size: 1rem; }
+    .flow-amount { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
+    .warning-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .warning-item { display: flex; align-items: flex-start; gap: 0.625rem; padding: 0.625rem 0.875rem; border-radius: 6px; font-size: 0.8125rem; }
+    .warning-item.active { background: #fef2f2; border: 1px solid #fca5a5; }
+    .warning-item.clear { background: #f0fdf4; border: 1px solid #86efac; color: var(--muted); }
+    .export-area { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; font-family: 'Courier New', monospace; font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+    .tag { font-size: 0.6875rem; font-weight: 600; padding: 0.125rem 0.5rem; border-radius: 10px; display: inline-block; }
+    .tag.equity { background: #dbeafe; color: #1e40af; }
+    .tag.defensive { background: #dcfce7; color: #166534; }
+    .tag.realasset { background: #fef3c7; color: #92400e; }
+    .tag.staging { background: #ede9fe; color: #5b21b6; }
+    .tag.cash { background: #d1fae5; color: #065f46; }
+    @media (max-width: 768px) {
+      .cards { grid-template-columns: 1fr 1fr; }
+      .two-col, .three-col { grid-template-columns: 1fr; }
+      .allocation-bars { flex-direction: column; }
+      .bar-group { min-width: 100%; }
+    }
+    @media print {
+      .btn, .tab-bar { display: none; }
+      .app { padding: 0; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ─── PLAN RATIOS (immutable — all proportional to total capital) ─────────────
+// Changing totalCapital in Settings rescales every euro amount via deriveConfig().
+const PLAN_RATIOS = {
+  month0Frac:  { VWCE: 25/300, XDW0: 3.5/300, IBCI: 25/300, ERNX: 35/300, Cash: 15/300, CMOE: 18/300, SGLD: 28.5/300 },
+  targetFrac:  { VWCE: 0.35,   XDW0: 0.05,    IBCI: 0.125,  ERNX: 0.175,  Cash: 0.05,  CMOE: 0.125,  SGLD: 0.125 },
+  dcaFrac:     { VWCE: 1.25/300, XDW0: 0.25/300, IBCI: 0.333/300, ERNX: 0.5/300, CMOE: 0.333/300, SGLD: 0.333/300 },
+  triggers: [
+    { threshold: -10, frac: 10/300, vwceFrac: 8.75/300,   xdw0Frac: 1.25/300 },
+    { threshold: -20, frac: 14/300, vwceFrac: 12.25/300,  xdw0Frac: 1.75/300 },
+    { threshold: -30, frac: 15/300, vwceFrac: 13.125/300, xdw0Frac: 1.875/300, activatesDeepCrashPivot: true },
+    { threshold: -40, frac: 20/300, vwceFrac: 17.5/300,   xdw0Frac: 2.5/300 },
+    { threshold: -48, frac: 22/300, vwceFrac: 19.25/300,  xdw0Frac: 2.75/300 }
+  ]
+};
+
+function deriveConfig(T) {
+  const r = frac => Math.round(T * frac);
+  const assets = ['VWCE','XDW0','IBCI','ERNX','Cash','CMOE','SGLD'];
+  const dcaAssets = ['VWCE','XDW0','IBCI','ERNX','CMOE','SGLD'];
+  return {
+    totalCapital: T,
+    startDate: null,
+    triggerReference: { type: "manual", startLevel: null, currentLevel: null },
+    baseTargets:  Object.fromEntries(assets.map(a => [a, r(PLAN_RATIOS.targetFrac[a])])),
+    month0Buys:   Object.fromEntries(assets.map(a => [a, r(PLAN_RATIOS.month0Frac[a])])),
+    monthlyDCA: {
+      months: 18,
+      monthlyTotal: Math.round(T * (2999/300000)),
+      buys: Object.fromEntries(dcaAssets.map(a => [a, r(PLAN_RATIOS.dcaFrac[a])]))
+    },
+    drawdownTriggers: PLAN_RATIOS.triggers.map(t => ({
+      threshold: t.threshold,
+      total: r(t.frac),
+      buys: { VWCE: r(t.vwceFrac), XDW0: r(t.xdw0Frac) },
+      ...(t.activatesDeepCrashPivot ? { activatesDeepCrashPivot: true } : {})
+    })),
+    completionReserve: { amount: r(15/300), noCrashUse: "completeBaseTargetByMonth18", deepCrashUse: "redirectToVWCE_XDW0" },
+    rules: { fullyAllocatedByMonth: 18, noPermanentOpportunisticReserve: true, deepCrashPivotThreshold: -30 }
+  };
+}
+
+// ─── DEFAULT CONFIG ────────────────────────────────────────────────────────
+const DEFAULT_CONFIG = deriveConfig(300000);
+
+const DEFAULT_STATE = {
+  currentMonth: 0,
+  manualDrawdown: null,
+  startLevel: null,
+  currentLevel: null,
+  month0Complete: false,
+  dcaCompleted: {},       // { "1": true, "2": true, ... }
+  triggersExecuted: {},   // { "-10": { date: "...", note: "" }, ... }
+  holdings: { VWCE: 0, XDW0: 0, IBCI: 0, ERNX: 0, Cash: 0, CMOE: 0, SGLD: 0 },
+  transactions: [],
+  notes: ""
+};
+
+// ─── ASSET COLOURS ─────────────────────────────────────────────────────────
+const ASSET_COLORS = {
+  VWCE:    "#2563eb",
+  XDW0:    "#0ea5e9",
+  IBCI:    "#059669",
+  ERNX:    "#34d399",
+  Cash:    "#16a34a",
+  CMOE:    "#d97706",
+  SGLD:    "#f59e0b",
+  Staging: "#8b5cf6"
+};
+
+const ASSET_CATEGORIES = {
+  VWCE: "Global Equities",
+  XDW0: "Energy Equities",
+  IBCI: "Defensive",
+  ERNX: "Defensive",
+  Cash: "Defensive (Permanent Cash)",
+  CMOE: "Real Assets",
+  SGLD: "Real Assets"
+};
+
+// ─── FORMAT HELPERS ─────────────────────────────────────────────────────────
+const fmt = (n, decimals = 0) => {
+  if (n === null || n === undefined || isNaN(n)) return "—";
+  return "€" + Math.round(n).toLocaleString("en-IE");
+};
+const pct = (n, decimals = 1) => {
+  if (n === null || n === undefined || isNaN(n)) return "—";
+  return (n * 100).toFixed(decimals) + "%";
+};
+const fmtPct = (n) => {
+  if (n === null || n === undefined || isNaN(n)) return "—";
+  return n.toFixed(1) + "%";
+};
+
+// ─── CORE CALCULATIONS ──────────────────────────────────────────────────────
+function calcDrawdown(startLevel, currentLevel, manualDrawdown) {
+  if (manualDrawdown !== null && manualDrawdown !== undefined && manualDrawdown !== "") {
+    return parseFloat(manualDrawdown) / 100;
+  }
+  if (startLevel && currentLevel && startLevel > 0) {
+    return (currentLevel - startLevel) / startLevel;
+  }
+  return 0;
+}
+
+function calcInvested(state) {
+  return Object.values(state.holdings).reduce((a, b) => a + (b || 0), 0);
+}
+
+function calcStagingRemaining(config, state) {
+  const invested = calcInvested(state);
+  return config.totalCapital - invested;
+}
+
+function getActiveTriggers(drawdownPct, config) {
+  // drawdownPct is e.g. -0.32 (i.e. -32%)
+  const dd = drawdownPct * 100;
+  return config.drawdownTriggers.filter(t => dd <= t.threshold);
+}
+
+function getTriggerStatus(trigger, state, drawdownPct) {
+  const executed = state.triggersExecuted[String(trigger.threshold)];
+  if (executed) return "completed";
+  const dd = drawdownPct * 100;
+  if (dd <= trigger.threshold) return "fired";
+  return "waiting";
+}
+
+function isDeepCrashActive(drawdownPct) {
+  return drawdownPct * 100 <= -30;
+}
+
+function calcNextAction(config, state) {
+  const drawdownPct = calcDrawdown(state.startLevel, state.currentLevel, state.manualDrawdown);
+  const dd = drawdownPct * 100;
+  const stagingRemaining = calcStagingRemaining(config, state);
+  const currentMonth = state.currentMonth || 0;
+  const monthsLeft = Math.max(0, 18 - currentMonth);
+
+  // Check unfired triggers first
+  for (const t of config.drawdownTriggers) {
+    const status = getTriggerStatus(t, state, drawdownPct);
+    if (status === "fired") {
+      return {
+        priority: "urgent",
+        text: `TRIGGER FIRED: Drawdown has reached ${t.threshold}%. Deploy ${fmt(t.total)}: ${fmt(t.buys.VWCE)} into VWCE and ${fmt(t.buys.XDW0)} into XDW0.`,
+        action: "execute_trigger",
+        threshold: t.threshold
+      };
+    }
+  }
+
+  if (!state.month0Complete) {
+    return { priority: "action", text: "Complete Month 0 initial investment: €150,000 across VWCE, XDW0, IBCI, ERNX, Cash, CMOE, SGLD.", action: "month0" };
+  }
+
+  if (currentMonth > 0 && currentMonth <= 18) {
+    for (let m = 1; m <= currentMonth; m++) {
+      if (!state.dcaCompleted[String(m)]) {
+        return { priority: "action", text: `Month ${m} DCA due: buy €1,250 VWCE, €250 XDW0, €333 IBCI, €500 ERNX, €333 CMOE, €333 SGLD (total ~€2,999).`, action: "dca", month: m };
+      }
+    }
+  }
+
+  if (currentMonth >= 13 && stagingRemaining > 0 && monthsLeft > 0) {
+    const monthly = stagingRemaining / monthsLeft;
+    return { priority: "warn", text: `Month 18 approaching (Month ${currentMonth}/18). Deploy ${fmt(monthly)}/month to reach full allocation by Month 18. Staging reserve remaining: ${fmt(stagingRemaining)}.`, action: "month18" };
+  }
+
+  if (currentMonth >= 18 && stagingRemaining > 1) {
+    return { priority: "urgent", text: `PLAN BREACH: Month 18 has passed and ${fmt(stagingRemaining)} of temporary staging reserve is still unallocated. Deploy immediately.`, action: "breach" };
+  }
+
+  if (dd < -5 && dd > -10) {
+    return { priority: "info", text: `Current drawdown: ${fmtPct(dd)}%. No trigger yet. Next trigger at −10% (deploy ${fmt(10000)}).`, action: "watch" };
+  }
+
+  const nextTrigger = config.drawdownTriggers.find(t => dd > t.threshold && !state.triggersExecuted[String(t.threshold)]);
+  if (nextTrigger) {
+    return { priority: "info", text: `Continue monthly DCA. Current drawdown: ${fmtPct(dd)}%. Next trigger at ${nextTrigger.threshold}% — deploy ${fmt(nextTrigger.total)}: ${fmt(nextTrigger.buys.VWCE)} VWCE + ${fmt(nextTrigger.buys.XDW0)} XDW0.`, action: "watch" };
+  }
+
+  return { priority: "info", text: `Continue monthly DCA. No triggers active. Staging reserve: ${fmt(stagingRemaining)}. Months remaining: ${monthsLeft}.`, action: "continue" };
+}
+
+function calcWarnings(config, state) {
+  const drawdownPct = calcDrawdown(state.startLevel, state.currentLevel, state.manualDrawdown);
+  const invested = calcInvested(state);
+  const stagingRemaining = calcStagingRemaining(config, state);
+  const currentMonth = state.currentMonth || 0;
+  const warnings = [];
+
+  // 1. Trigger fired but not executed
+  config.drawdownTriggers.forEach(t => {
+    const status = getTriggerStatus(t, state, drawdownPct);
+    if (status === "fired") {
+      warnings.push({ id: "trigger_" + t.threshold, text: `Trigger ${t.threshold}% has fired but has not been marked as executed. Deploy ${fmt(t.total)}.`, severity: "high" });
+    }
+  });
+
+  // 2. Past Month 18 with staging reserve
+  if (currentMonth > 18 && stagingRemaining > 1) {
+    warnings.push({ id: "month18", text: `Past Month 18 and ${fmt(stagingRemaining)} of temporary staging reserve remains unallocated.`, severity: "high" });
+  }
+
+  // 3. Total invested exceeds total capital
+  if (invested > config.totalCapital + 1) {
+    warnings.push({ id: "overcapital", text: `Total completed buys (${fmt(invested)}) exceed the total capital of ${fmt(config.totalCapital)}.`, severity: "high" });
+  }
+
+  // 4. Deep-crash pivot active but non-equity DCA still scheduled
+  if (isDeepCrashActive(drawdownPct) && currentMonth < 18) {
+    warnings.push({ id: "dca_pause", text: "Deep-crash pivot is active. Pause DCA for IBCI, ERNX, CMOE, and SGLD. Redirect remaining capital toward VWCE/XDW0.", severity: "medium" });
+  }
+
+  // 5. Trigger executed twice check (shouldn't happen in normal flow)
+  return warnings;
+}
+
+// ─── SCENARIO SIMULATOR ─────────────────────────────────────────────────────
+const SCENARIOS = [
+  { id: "none", label: "No Correction", drawdown: 0, desc: "Markets continue upward; no triggers fire." },
+  { id: "bear2022", label: "2022-style Bear", drawdown: -22, desc: "−20% to −25% drawdown; two triggers fire." },
+  { id: "covid", label: "COVID / 1987 Crash", drawdown: -33, desc: "~−33% fast crash; deep-crash pivot activates." },
+  { id: "dotcom", label: "Dot-com / GFC Deep", drawdown: -50, desc: "−48–55% crash; all triggers fire." }
+];
+
+function runScenario(config, drawdownPct) {
+  const dd = drawdownPct;
+  const firedTriggers = config.drawdownTriggers.filter(t => dd <= t.threshold);
+  const triggerCapital = firedTriggers.reduce((s, t) => s + t.total, 0);
+  const deepCrash = dd <= -30;
+
+  const dcaCapital = 54000; // scheduled DCA 18 months
+  const completionReserve = 15000;
+  const remainingDrawdownReserve = 81000 - triggerCapital;
+
+  // In no-crash: all staging deploys into base targets
+  // In crash: triggered tranches deploy, remaining redirected to VWCE/XDW0 if deep crash
+  let totalDeployed = 150000 + dcaCapital + triggerCapital;
+  let stagingLeft = 300000 - totalDeployed;
+
+  if (!deepCrash) stagingLeft = 0; // completion rule
+
+  const firedSummary = firedTriggers.map(t => `${t.threshold}% → ${fmt(t.total)}`).join(", ");
+
+  return {
+    firedTriggers,
+    triggerCapital,
+    deepCrash,
+    stagingLeft,
+    totalDeployed: deepCrash ? totalDeployed : 300000,
+    plain: deepCrash
+      ? `Deep-crash pivot activates at −30%. ${firedTriggers.length} trigger(s) fire (${fmt(triggerCapital)} into VWCE/XDW0). Remaining staging capital redirected to VWCE/XDW0 as crash continues. Final allocation is intentionally equity-heavy.`
+      : firedTriggers.length === 0
+        ? "No triggers fire. All €54k DCA runs on schedule. Completion reserve + unused drawdown reserve deploy by Month 18 into base target weights. Fully allocated at Month 18."
+        : `${firedTriggers.length} trigger(s) fire (${firedSummary}) — ${fmt(triggerCapital)} deployed to VWCE/XDW0. No deep-crash pivot. Remaining reserve deploys into base targets by Month 18.`
+  };
+}
+
+// ─── STORAGE ────────────────────────────────────────────────────────────────
+const STORAGE_KEY = "portfolio_dashboard_v1";
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+function saveToStorage(data) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+}
+
+// ─── ALLOCATION BARS COMPONENT ───────────────────────────────────────────────
+function AllocationBars({ config, state, viewBy }) {
+  const drawdownPct = calcDrawdown(state.startLevel, state.currentLevel, state.manualDrawdown);
+  const invested = calcInvested(state);
+  const stagingRemaining = calcStagingRemaining(config, state);
+  const total = config.totalCapital;
+  const deepCrash = isDeepCrashActive(drawdownPct);
+
+  const assets = Object.keys(config.baseTargets);
+
+  // current holdings + staging as remainder
+  const currentAlloc = { ...state.holdings, Staging: stagingRemaining };
+  const baseAlloc = { ...config.baseTargets };
+  const crashAlloc = (() => {
+    // In deep crash: all staging goes to VWCE/XDW0
+    const base = { ...config.baseTargets };
+    const extra = Object.values(state.holdings).reduce((s, v) => s + (v || 0), 0);
+    // Approximate: add remaining staging to VWCE proportionally
+    const remaining = 300000 - extra;
+    if (remaining > 0) {
+      base.VWCE += remaining * (70875 / 81000);
+      base.XDW0 += remaining * (10125 / 81000);
+      // Remove staged amounts from non-equity
+    }
+    return base;
+  })();
+
+  const buildSegments = (alloc, includeStaging) => {
+    if (viewBy === "category") {
+      const cats = [
+        { label: "Global Equities", color: ASSET_COLORS.VWCE, keys: ["VWCE"] },
+        { label: "Energy Equities", color: ASSET_COLORS.XDW0, keys: ["XDW0"] },
+        { label: "Defensive", color: ASSET_COLORS.IBCI, keys: ["IBCI", "ERNX", "Cash"] },
+        { label: "Real Assets", color: ASSET_COLORS.CMOE, keys: ["CMOE", "SGLD"] },
+        ...(includeStaging && alloc.Staging > 0 ? [{ label: "Staging Reserve", color: ASSET_COLORS.Staging, keys: ["Staging"] }] : [])
+      ];
+      return cats.map(c => ({
+        label: c.label,
+        color: c.color,
+        value: c.keys.reduce((s, k) => s + (alloc[k] || 0), 0),
+        pctStr: ""
+      })).filter(s => s.value > 0);
+    }
+    const segs = assets.map(a => ({ label: a, color: ASSET_COLORS[a], value: alloc[a] || 0 }));
+    if (includeStaging && alloc.Staging > 0) segs.push({ label: "Staging Reserve", color: ASSET_COLORS.Staging, value: alloc.Staging });
+    return segs.filter(s => s.value > 0);
+  };
+
+  const renderBar = (alloc, title, includeStaging) => {
+    const segments = buildSegments(alloc, includeStaging);
+    const barTotal = segments.reduce((s, seg) => s + seg.value, 0);
+    if (barTotal === 0) return null;
+    return (
+      <div className="bar-group" key={title}>
+        <div className="bar-title">{title}</div>
+        <div className="bar-container" style={{ height: 260 }}>
+          {segments.map((seg, i) => {
+            const heightPct = (seg.value / total) * 100;
+            const minH = seg.value > 0 ? Math.max(heightPct, 2) : 0;
+            return (
+              <div key={i} title={`${seg.label}: ${fmt(seg.value)} (${fmtPct(seg.value/total*100)}%)`}
+                style={{ background: seg.color, flex: `0 0 ${heightPct}%`, borderRadius: i === segments.length - 1 ? "3px 3px 0 0" : "1px", position: "relative", minHeight: seg.value > 0 ? 12 : 0 }}>
+                {heightPct > 6 && <span style={{ position: "absolute", bottom: 2, left: 0, right: 0, textAlign: "center", fontSize: "0.55rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, padding: "0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{seg.label}</span>}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ fontSize: "0.625rem", color: "var(--muted)", textAlign: "center", marginTop: 4 }}>{fmt(barTotal)}</div>
+      </div>
+    );
+  };
+
+  const legendItems = viewBy === "category"
+    ? [
+        { label: "Global Equities", color: ASSET_COLORS.VWCE },
+        { label: "Energy Equities", color: ASSET_COLORS.XDW0 },
+        { label: "Defensive (IBCI/ERNX/Cash)", color: ASSET_COLORS.IBCI },
+        { label: "Real Assets (CMOE/SGLD)", color: ASSET_COLORS.CMOE },
+        { label: "Staging Reserve (temp.)", color: ASSET_COLORS.Staging }
+      ]
+    : [...assets, "Staging Reserve"].map(a => ({ label: a === "Staging Reserve" ? "Staging Reserve (temp.)" : a, color: ASSET_COLORS[a] || ASSET_COLORS.Staging }));
+
+  return (
+    <div>
+      <div className="allocation-bars">
+        {renderBar(currentAlloc, "Current", true)}
+        {renderBar(baseAlloc, "Base Target (No Crash)", false)}
+        {deepCrash && renderBar(crashAlloc, "Crash-Pivot Target", false)}
+      </div>
+      <div className="bar-legend" style={{ marginTop: "0.875rem" }}>
+        {legendItems.map((item, i) => (
+          <div key={i} className="legend-item">
+            <div className="legend-dot" style={{ background: item.color }} />
+            {item.label}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── TRIGGER LADDER ──────────────────────────────────────────────────────────
+function TriggerLadder({ config, state, drawdownPct, onMarkExecuted }) {
+  const dd = drawdownPct * 100;
+
+  return (
+    <div className="trigger-ladder">
+      {config.drawdownTriggers.map((t, i) => {
+        const status = getTriggerStatus(t, state, drawdownPct);
+        const executed = state.triggersExecuted[String(t.threshold)];
+        const showPivotNote = t.activatesDeepCrashPivot;
+        return (
+          <div key={i} className={`trigger ${status}`}>
+            <div className={`trigger-badge ${status}`}>
+              {status === "completed" ? "✓" : status === "fired" ? "!" : status === "overdue" ? "⚠" : "○"}
+            </div>
+            <div className="trigger-info">
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+                <span className="trigger-pct">{t.threshold}%</span>
+                <span className={`trigger-status-label ${status}`}>
+                  {status === "waiting" ? "WAITING" : status === "fired" ? "FIRED — ACT NOW" : status === "completed" ? "EXECUTED" : "OVERDUE"}
+                </span>
+              </div>
+              <div className="trigger-detail">
+                Deploy {fmt(t.total)} → {fmt(t.buys.VWCE)} VWCE + {fmt(t.buys.XDW0)} XDW0
+                {executed && <span style={{ marginLeft: 8, color: "var(--completed)" }}>✓ Executed {executed.date}</span>}
+              </div>
+              {showPivotNote && <div style={{ fontSize: "0.6875rem", color: "#dc2626", marginTop: "0.25rem", fontWeight: 500 }}>⚡ Activates Deep-Crash Pivot — pause IBCI/ERNX/CMOE/SGLD DCA</div>}
+            </div>
+            {status === "fired" && (
+              <button className="btn primary small" onClick={() => onMarkExecuted(t.threshold)}>
+                Mark executed
+              </button>
+            )}
+            {status === "waiting" && <div style={{ fontSize: "0.6875rem", color: "var(--muted)" }}>Needs {fmtPct(t.threshold - dd)}% more</div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── TIMELINE ────────────────────────────────────────────────────────────────
+function Timeline({ config, state, onMarkDCA }) {
+  const months = Array.from({ length: 19 }, (_, i) => i); // 0..18
+  const currentMonth = state.currentMonth || 0;
+
+  return (
+    <div>
+      <div className="timeline-track" style={{ paddingBottom: "0.5rem" }}>
+        {months.map((m, i) => {
+          const isCompleted = m === 0 ? state.month0Complete : state.dcaCompleted[String(m)];
+          const isCurrent = m === currentMonth;
+          const isFuture = m > currentMonth;
+          const dotClass = isCompleted ? "completed" : isCurrent ? "current" : "future";
+          const amount = m === 0 ? 150000 : m === 18 ? null : 2999;
+          return (
+            <React.Fragment key={m}>
+              {i > 0 && <div className={`timeline-connector ${state.dcaCompleted[String(m - 1)] || (m === 1 && state.month0Complete) ? "completed" : ""}`} style={{ flex: 1, minWidth: 8 }} />}
+              <div className="timeline-month" style={{ cursor: m > 0 && m <= 18 && !isCompleted && m <= currentMonth ? "pointer" : "default" }}
+                onClick={() => m > 0 && m <= 18 && !isCompleted && m <= currentMonth && onMarkDCA(m)}>
+                <div className={`timeline-dot ${dotClass}`} title={m === 0 ? "Month 0 initial" : m === 18 ? "Month 18 deadline" : `Month ${m} DCA ~€2,999`} />
+                <div className="timeline-label">M{m}</div>
+                {amount && <div className="timeline-amount">{m === 0 ? "€150k" : "~€3k"}</div>}
+                {m === 18 && <div className="timeline-amount" style={{ color: "#dc2626", fontWeight: 600 }}>Deadline</div>}
+              </div>
+            </React.Fragment>
+          );
+        })}
+      </div>
+      <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem", flexWrap: "wrap" }}>
+        <div className="legend-item"><div className="legend-dot" style={{ background: "var(--completed)", borderRadius: "50%" }} /> Completed</div>
+        <div className="legend-item"><div style={{ width: 10, height: 10, borderRadius: "50%", border: "2px solid var(--accent)", background: "var(--surface)", flexShrink: 0 }} /> Current month</div>
+        <div className="legend-item"><div style={{ width: 10, height: 10, borderRadius: "50%", border: "2px solid var(--border)", background: "var(--surface)", flexShrink: 0 }} /> Future</div>
+      </div>
+      <div style={{ marginTop: "0.75rem" }}>
+        <div className="progress-bar" style={{ height: 12 }}>
+          <div className="progress-fill" style={{ width: `${Math.min(100, (currentMonth / 18) * 100)}%` }} />
+        </div>
+        <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "0.25rem" }}>
+          Month {currentMonth} of 18 ({Math.round((currentMonth / 18) * 100)}% of deployment window elapsed)
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── SCENARIO SIMULATOR ──────────────────────────────────────────────────────
+function ScenarioSimulator({ config }) {
+  const [selected, setSelected] = useState("none");
+  const scenario = SCENARIOS.find(s => s.id === selected);
+  const result = runScenario(config, scenario.drawdown);
+
+  return (
+    <div>
+      <div className="scenario-grid">
+        {SCENARIOS.map(s => (
+          <div key={s.id} className={`scenario-card ${selected === s.id ? "selected" : ""}`} onClick={() => setSelected(s.id)}>
+            <h3>{s.label}</h3>
+            <p>{s.desc}</p>
+          </div>
+        ))}
+      </div>
+      <div className="scenario-result">
+        <h3>{scenario.label} — Outcome</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "0.75rem", marginBottom: "0.875rem" }}>
+          <div><div style={{ fontSize: "0.625rem", fontWeight: 600, textTransform: "uppercase", color: "var(--muted)", marginBottom: 2 }}>Triggers Fire</div>
+            <div style={{ fontWeight: 700 }}>{result.firedTriggers.length} of {config.drawdownTriggers.length}</div></div>
+          <div><div style={{ fontSize: "0.625rem", fontWeight: 600, textTransform: "uppercase", color: "var(--muted)", marginBottom: 2 }}>Trigger Capital</div>
+            <div style={{ fontWeight: 700 }}>{fmt(result.triggerCapital)}</div></div>
+          <div><div style={{ fontSize: "0.625rem", fontWeight: 600, textTransform: "uppercase", color: "var(--muted)", marginBottom: 2 }}>Deep-Crash Pivot</div>
+            <div style={{ fontWeight: 700, color: result.deepCrash ? "#dc2626" : "var(--completed)" }}>{result.deepCrash ? "YES — Active" : "No"}</div></div>
+          <div><div style={{ fontSize: "0.625rem", fontWeight: 600, textTransform: "uppercase", color: "var(--muted)", marginBottom: 2 }}>Staging at M18</div>
+            <div style={{ fontWeight: 700 }}>{fmt(result.stagingLeft)}</div></div>
+        </div>
+        {result.firedTriggers.length > 0 && (
+          <div style={{ marginBottom: "0.75rem" }}>
+            <div style={{ fontSize: "0.75rem", fontWeight: 600, marginBottom: "0.25rem" }}>Triggers fired:</div>
+            {result.firedTriggers.map(t => (
+              <div key={t.threshold} style={{ fontSize: "0.8125rem", padding: "0.25rem 0", borderBottom: "1px solid var(--border)" }}>
+                {t.threshold}% → {fmt(t.total)} ({fmt(t.buys.VWCE)} VWCE + {fmt(t.buys.XDW0)} XDW0)
+              </div>
+            ))}
+          </div>
+        )}
+        {result.deepCrash && (
+          <div className="banner crash" style={{ margin: 0, marginBottom: "0.75rem" }}>
+            <span className="banner-icon">⚡</span>
+            <div className="banner-text"><strong>Deep-Crash Pivot Active</strong><p>Pause IBCI, ERNX, CMOE, SGLD DCA. Redirect all remaining unallocated capital to VWCE/XDW0. Final allocation will be intentionally equity-heavy — this is by design.</p></div>
+          </div>
+        )}
+        <div style={{ fontSize: "0.875rem", lineHeight: 1.6, color: "var(--muted)", background: "white", padding: "0.875rem", borderRadius: 6, border: "1px solid var(--border)" }}>
+          {result.plain}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── HOLDINGS TABLE ──────────────────────────────────────────────────────────
+function HoldingsTable({ config, state }) {
+  const assets = Object.keys(config.baseTargets);
+  const drawdownPct = calcDrawdown(state.startLevel, state.currentLevel, state.manualDrawdown);
+  const deepCrash = isDeepCrashActive(drawdownPct);
+
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table>
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th>Category</th>
+            <th className="num">Invested</th>
+            <th className="num">Target</th>
+            <th className="num">Gap</th>
+            <th className="num">% of Target</th>
+            <th>Progress</th>
+          </tr>
+        </thead>
+        <tbody>
+          {assets.map(a => {
+            const held = state.holdings[a] || 0;
+            const target = config.baseTargets[a];
+            const gap = target - held;
+            const progress = target > 0 ? Math.min(1, held / target) : 0;
+            const isEquity = a === "VWCE" || a === "XDW0";
+            const canExceed = deepCrash && isEquity;
+            const isOver = held > target;
+            return (
+              <tr key={a}>
+                <td><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><span style={{ width: 10, height: 10, borderRadius: 2, background: ASSET_COLORS[a], display: "inline-block" }} /><strong>{a}</strong></span></td>
+                <td style={{ fontSize: "0.75rem", color: "var(--muted)" }}>{ASSET_CATEGORIES[a]}</td>
+                <td className="num">{fmt(held)}</td>
+                <td className="num">{fmt(target)}</td>
+                <td className="num" style={{ color: gap < 0 && !canExceed ? "var(--overdue)" : gap === 0 ? "var(--completed)" : "inherit" }}>
+                  {gap < 0 && !canExceed ? <span>⚠ {fmt(Math.abs(gap))} over</span> : gap === 0 ? "✓ Full" : fmt(gap)}
+                </td>
+                <td className="num">{target > 0 ? fmtPct(held / target * 100) + "%" : "—"}</td>
+                <td style={{ minWidth: 100 }}>
+                  <div className="gap-bar">
+                    <div className="gap-bar-fill" style={{ width: `${Math.min(100, progress * 100)}%`, background: isOver && !canExceed ? "var(--overdue)" : ASSET_COLORS[a] }} />
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+        <tfoot>
+          <tr style={{ borderTop: "2px solid var(--border)", fontWeight: 600 }}>
+            <td colSpan={2}>Total</td>
+            <td className="num">{fmt(calcInvested(state))}</td>
+            <td className="num">{fmt(config.totalCapital)}</td>
+            <td className="num">{fmt(calcStagingRemaining(config, state))}</td>
+            <td className="num">{fmtPct(calcInvested(state) / config.totalCapital * 100)}%</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
+// ─── TRANSACTION LOG ─────────────────────────────────────────────────────────
+function TransactionLog({ state, onClear }) {
+  const txns = state.transactions || [];
+  return (
+    <div>
+      {txns.length === 0 ? <p style={{ color: "var(--muted)", fontSize: "0.875rem" }}>No transactions recorded yet.</p> : (
+        <div style={{ overflowX: "auto" }}>
+          <table>
+            <thead><tr><th>Date</th><th>Type</th><th>Description</th><th className="num">Amount</th></tr></thead>
+            <tbody>
+              {[...txns].reverse().map((t, i) => (
+                <tr key={i}>
+                  <td style={{ fontSize: "0.75rem", color: "var(--muted)" }}>{t.date}</td>
+                  <td><span className={`tag ${t.type === "trigger" ? "equity" : t.type === "dca" ? "defensive" : "staging"}`}>{t.type}</span></td>
+                  <td>{t.desc}</td>
+                  <td className="num">{fmt(t.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {txns.length > 0 && <button className="btn small" style={{ marginTop: "0.75rem" }} onClick={onClear}>Clear log</button>}
+    </div>
+  );
+}
+
+// ─── SETTINGS PANEL ──────────────────────────────────────────────────────────
+function SettingsPanel({ config, state, onUpdateState, onUpdateConfig, onReset }) {
+  const [refMode, setRefMode] = useState(state.startLevel ? "price" : "manual");
+
+  return (
+    <div>
+      <h3>Total Capital</h3>
+      <div style={{ background: "#eff6ff", border: "1px solid #93c5fd", borderRadius: 8, padding: "0.875rem 1rem", marginBottom: "1rem" }}>
+        <div className="input-row" style={{ marginBottom: 0 }}>
+          <label style={{ fontWeight: 600, color: "var(--accent)" }}>Total capital (€)</label>
+          <input type="number" step="1000" min={10000}
+            value={config.totalCapital}
+            onChange={e => {
+              const T = parseInt(e.target.value) || 300000;
+              if (T >= 10000) onUpdateConfig(deriveConfig(T));
+            }} />
+        </div>
+        <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "0.375rem" }}>
+          Changing this rescales every target, DCA amount, and trigger tranche proportionally. Holdings you have already marked as complete are <em>not</em> adjusted — only the plan targets update.
+        </div>
+      </div>
+      <hr className="divider" />
+      <h3>Plan Controls</h3>
+      <div className="input-row">
+        <label>Current month (0–18)</label>
+        <input type="number" min={0} max={24} value={state.currentMonth || 0}
+          onChange={e => onUpdateState({ currentMonth: parseInt(e.target.value) || 0 })} />
+      </div>
+      <div className="input-row">
+        <label>Start date</label>
+        <input type="date" value={state.startDate || ""}
+          onChange={e => onUpdateState({ startDate: e.target.value })} />
+      </div>
+      <hr className="divider" />
+      <h3>Drawdown Reference</h3>
+      <div className="input-row">
+        <label>Reference mode</label>
+        <select value={refMode} onChange={e => setRefMode(e.target.value)}>
+          <option value="price">Price levels</option>
+          <option value="manual">Manual %</option>
+        </select>
+      </div>
+      {refMode === "price" ? (
+        <>
+          <div className="input-row">
+            <label>VWCE start price (Day 1)</label>
+            <input type="number" step="0.01" value={state.startLevel || ""}
+              onChange={e => onUpdateState({ startLevel: parseFloat(e.target.value) || null })} />
+          </div>
+          <div className="input-row">
+            <label>VWCE current price</label>
+            <input type="number" step="0.01" value={state.currentLevel || ""}
+              onChange={e => onUpdateState({ currentLevel: parseFloat(e.target.value) || null, manualDrawdown: null })} />
+          </div>
+        </>
+      ) : (
+        <div className="input-row">
+          <label>Manual drawdown % (e.g. -15)</label>
+          <input type="number" step="0.1" min={-100} max={100}
+            value={state.manualDrawdown !== null && state.manualDrawdown !== undefined ? state.manualDrawdown : ""}
+            onChange={e => onUpdateState({ manualDrawdown: e.target.value === "" ? null : parseFloat(e.target.value), startLevel: null, currentLevel: null })} />
+        </div>
+      )}
+      <hr className="divider" />
+      <h3>Holdings (deployed capital, at cost)</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "0.5rem" }}>
+        {Object.keys(config.baseTargets).map(a => (
+          <div className="input-row" key={a} style={{ marginBottom: 0 }}>
+            <label style={{ width: 80 }}>{a}</label>
+            <input type="number" step="100" min={0} value={state.holdings[a] || 0}
+              onChange={e => onUpdateState({ holdings: { ...state.holdings, [a]: parseFloat(e.target.value) || 0 } })} />
+          </div>
+        ))}
+      </div>
+      <hr className="divider" />
+      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+        <button className="btn danger small" onClick={onReset}>Reset all state</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── EXPORT PANEL ────────────────────────────────────────────────────────────
+function ExportPanel({ config, state }) {
+  const [view, setView] = useState("status");
+  const exportData = view === "config" ? config : { config, state, exportedAt: new Date().toISOString() };
+  const json = JSON.stringify(exportData, null, 2);
+
+  const download = (filename, content) => {
+    const blob = new Blob([content], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
+        <button className={`btn ${view === "status" ? "primary" : ""}`} onClick={() => setView("status")}>Current Status</button>
+        <button className={`btn ${view === "config" ? "primary" : ""}`} onClick={() => setView("config")}>Config Only</button>
+        <button className="btn" onClick={() => download("portfolio-status.json", JSON.stringify({ config, state, exportedAt: new Date().toISOString() }, null, 2))}>⬇ Download Status</button>
+        <button className="btn" onClick={() => download("portfolio-config.json", JSON.stringify(config, null, 2))}>⬇ Download Config</button>
+        <button className="btn" onClick={() => window.print()}>⎙ Print</button>
+      </div>
+      <div className="export-area">{json}</div>
+    </div>
+  );
+}
+
+// ─── CAPITAL FLOW VISUAL ─────────────────────────────────────────────────────
+function CapitalFlow({ config, state }) {
+  const invested = calcInvested(state);
+  const stagingRem = calcStagingRemaining(config, state);
+  const totalDCA = 54000;
+  const drawdownReserve = 81000;
+  const completionRes = 15000;
+  const dcaUsed = Object.values(state.dcaCompleted || {}).filter(Boolean).length * 2999;
+  const triggerUsed = Object.keys(state.triggersExecuted || {}).reduce((s, k) => {
+    const t = config.drawdownTriggers.find(t => String(t.threshold) === k);
+    return s + (t ? t.total : 0);
+  }, 0);
+
+  return (
+    <div className="flow-diagram">
+      <div className="flow-row">
+        <div className="flow-node total">€300,000 Total Capital</div>
+      </div>
+      <div className="flow-row" style={{ paddingLeft: "1.5rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginRight: 8 }}>
+          <div style={{ width: 1, height: 16, background: "var(--border)", margin: "0 auto" }} />
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <div className="flow-node invested">€150,000 Month 0 Invested</div>
+              <span style={{ color: "var(--muted)", alignSelf: "center" }}>+</span>
+              <div className="flow-node staging">€150,000 Staging Reserve</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flow-row" style={{ paddingLeft: "2rem" }}>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "flex-start" }}>
+          <div>
+            <div className="flow-node dca" style={{ marginBottom: 4 }}>€54,000 Scheduled DCA</div>
+            <div style={{ fontSize: "0.6875rem", color: "var(--muted)", paddingLeft: 4 }}>€{2999}/month × 18 months</div>
+            <div style={{ fontSize: "0.6875rem", color: "var(--completed)", paddingLeft: 4 }}>Used: {fmt(dcaUsed)}</div>
+          </div>
+          <div>
+            <div className="flow-node drawdown" style={{ marginBottom: 4 }}>€81,000 Drawdown Reserve</div>
+            <div style={{ fontSize: "0.6875rem", color: "var(--muted)", paddingLeft: 4 }}>Deploy at -10% to -48%</div>
+            <div style={{ fontSize: "0.6875rem", color: "var(--completed)", paddingLeft: 4 }}>Used: {fmt(triggerUsed)}</div>
+          </div>
+          <div>
+            <div className="flow-node reserve" style={{ marginBottom: 4 }}>€15,000 Completion Reserve</div>
+            <div style={{ fontSize: "0.6875rem", color: "var(--muted)", paddingLeft: 4 }}>Complete base target by M18</div>
+            <div style={{ fontSize: "0.6875rem", color: "var(--muted)", paddingLeft: 4 }}>Or redirect to VWCE/XDW0 in crash</div>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: "0.75rem", background: "#fffbeb", border: "1px solid var(--warn-border)", borderRadius: 6, fontSize: "0.75rem" }}>
+        <strong>⚠ Important distinction:</strong> The permanent Cash position (€15,000) is part of your final portfolio target and is <em>not</em> temporary staging reserve. Once deployed as part of Month 0, it counts as fully invested, not as staging capital.
+      </div>
+      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+        <div style={{ fontSize: "0.8125rem" }}><strong>Staging remaining:</strong> {fmt(stagingRem)} <span style={{ color: "var(--muted)" }}>({fmtPct(stagingRem / config.totalCapital * 100)}% of total)</span></div>
+        <div style={{ fontSize: "0.8125rem" }}><strong>Invested (at cost):</strong> {fmt(invested)} <span style={{ color: "var(--muted)" }}>({fmtPct(invested / config.totalCapital * 100)}% of total)</span></div>
+      </div>
+    </div>
+  );
+}
+
+// ─── NEXT ACTION CHECKLIST ───────────────────────────────────────────────────
+function NextActionChecklist({ config, state, drawdownPct }) {
+  const dd = drawdownPct * 100;
+  const stagingRemaining = calcStagingRemaining(config, state);
+  const currentMonth = state.currentMonth || 0;
+  const monthsLeft = Math.max(0, 18 - currentMonth);
+  const items = [];
+  let priority = 1;
+
+  // Unexecuted fired triggers (highest priority)
+  config.drawdownTriggers.forEach(t => {
+    const status = getTriggerStatus(t, state, drawdownPct);
+    if (status === "fired") {
+      items.push({ priority: priority++, type: "urgent", text: `TRIGGER FIRED at ${t.threshold}%: Deploy ${fmt(t.total)} immediately — ${fmt(t.buys.VWCE)} into VWCE and ${fmt(t.buys.XDW0)} into XDW0.` });
+    }
+  });
+
+  // Month 18 breach
+  if (currentMonth > 18 && stagingRemaining > 1) {
+    items.push({ priority: priority++, type: "urgent", text: `PLAN BREACH: Past Month 18. ${fmt(stagingRemaining)} still unallocated. Deploy immediately into base target weights.` });
+  }
+
+  // Month 0 incomplete
+  if (!state.month0Complete) {
+    items.push({ priority: priority++, type: "action", text: `Month 0 initial investment not completed. Buy: €25,000 VWCE, €3,500 XDW0, €25,000 IBCI, €35,000 ERNX, €15,000 Cash, €18,000 CMOE, €28,500 SGLD.` });
+  }
+
+  // Uncompleted past DCA months
+  for (let m = 1; m <= currentMonth && m <= 18; m++) {
+    if (!state.dcaCompleted[String(m)]) {
+      items.push({ priority: priority++, type: "action", text: `Month ${m} DCA due: buy €1,250 VWCE, €250 XDW0, €333 IBCI, €500 ERNX, €333 CMOE, €333 SGLD (~€2,999 total).` });
+    }
+  }
+
+  // Deep crash pause warning
+  if (isDeepCrashActive(drawdownPct)) {
+    items.push({ priority: priority++, type: "urgent", text: `DEEP-CRASH PIVOT ACTIVE: Pause DCA for IBCI, ERNX, CMOE, SGLD. Redirect all remaining unallocated capital to VWCE and XDW0.` });
+  }
+
+  // Drawdown status
+  if (dd < 0 && dd > -10) {
+    items.push({ priority: priority++, type: "info", text: `Current drawdown: ${fmtPct(dd)}%. No trigger yet. Next: −10% trigger (deploy €10,000).` });
+  } else if (dd >= 0) {
+    const nextTrigger = config.drawdownTriggers.find(t => !state.triggersExecuted[String(t.threshold)]);
+    if (nextTrigger) {
+      items.push({ priority: priority++, type: "info", text: `No drawdown currently. Continue DCA. Next trigger: ${nextTrigger.threshold}% → deploy ${fmt(nextTrigger.total)}.` });
+    }
+  }
+
+  // M18 approaching
+  if (currentMonth >= 13 && currentMonth <= 18 && stagingRemaining > 1 && monthsLeft > 0) {
+    const monthly = stagingRemaining / monthsLeft;
+    items.push({ priority: priority++, type: "action", text: `Month 18 deadline approaching (${monthsLeft} month${monthsLeft === 1 ? "" : "s"} remaining). Deploy ~${fmt(monthly)}/month to be fully allocated by Month 18. Staging remaining: ${fmt(stagingRemaining)}.` });
+  }
+
+  // Staging summary
+  items.push({ priority: priority++, type: "info", text: `Temporary staging reserve remaining: ${fmt(stagingRemaining)} (${fmtPct(stagingRemaining / config.totalCapital * 100)}% of total). Months until M18 deadline: ${monthsLeft}.` });
+
+  return (
+    <div className="checklist">
+      {items.map((item, i) => (
+        <div key={i} className={`checklist-item ${item.type}`}>
+          <div className={`checklist-num ${item.type === "urgent" ? "urgent" : item.type === "info" ? "info" : ""}`}>{item.priority}</div>
+          <div className="checklist-text">{item.text}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── WARNINGS PANEL ──────────────────────────────────────────────────────────
+function WarningsPanel({ config, state }) {
+  const warnings = calcWarnings(config, state);
+  return (
+    <div className="warning-list">
+      {warnings.length === 0 && <div className="warning-item clear">✓ No active guardrail warnings.</div>}
+      {warnings.map(w => (
+        <div key={w.id} className={`warning-item active`}>
+          <span>⚠</span><span>{w.text}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── SUMMARY CARDS ───────────────────────────────────────────────────────────
+function SummaryCards({ config, state }) {
+  const invested = calcInvested(state);
+  const stagingRem = calcStagingRemaining(config, state);
+  const drawdownPct = calcDrawdown(state.startLevel, state.currentLevel, state.manualDrawdown);
+  const dd = drawdownPct * 100;
+  const nextAction = calcNextAction(config, state);
+  const total = config.totalCapital;
+
+  return (
+    <div className="cards">
+      <div className="card">
+        <div className="card-label">Total Portfolio</div>
+        <div className="card-value">{fmt(total)}</div>
+        <div className="card-sub">Full deployment target</div>
+      </div>
+      <div className="card">
+        <div className="card-label">Invested (at cost)</div>
+        <div className="card-value">{fmt(invested)}</div>
+        <div style={{ marginTop: 4 }}>
+          <div className="progress-bar"><div className="progress-fill" style={{ width: `${Math.min(100, invested / total * 100)}%` }} /></div>
+        </div>
+        <div className="card-sub">{fmtPct(invested / total * 100)}% of total</div>
+      </div>
+      <div className="card">
+        <div className="card-label">Staging Reserve Remaining</div>
+        <div className="card-value" style={{ color: stagingRem > 0 ? "var(--staging)" : "var(--completed)" }}>{fmt(stagingRem)}</div>
+        <div className="card-sub">{fmtPct(stagingRem / total * 100)}% of total · Deploy by Month 18</div>
+      </div>
+      <div className={`card ${Math.abs(dd) >= 10 ? "warn-card" : ""}`}>
+        <div className="card-label">Current Drawdown</div>
+        <div className="card-value" style={{ color: dd <= -30 ? "var(--overdue)" : dd <= -10 ? "var(--fired)" : "inherit" }}>
+          {state.manualDrawdown !== null && state.manualDrawdown !== undefined && state.manualDrawdown !== "" ? fmtPct(dd) + "%" : (state.startLevel && state.currentLevel ? fmtPct(dd) + "%" : "Not set")}
+        </div>
+        <div className="card-sub">
+          {dd <= -30 ? "⚡ Deep-crash pivot active" : dd <= -10 ? "⚠ Trigger(s) may have fired" : "Set in Settings panel"}
+        </div>
+      </div>
+      <div className={`card ${nextAction.priority === "urgent" ? "warn-card" : nextAction.priority === "action" ? "action-card" : ""}`} style={{ gridColumn: "span 1" }}>
+        <div className="card-label">Next Required Action</div>
+        <div className="card-action-text">{nextAction.text}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+function App() {
+  const stored = loadFromStorage();
+  const [config, setConfig] = useState(stored?.config || DEFAULT_CONFIG);
+  const [state, setState] = useState(stored?.state || DEFAULT_STATE);
+  const [view, setView] = useState("simple");
+  const [viewBy, setViewBy] = useState("asset");
+
+  // Persist on change
+  useEffect(() => {
+    saveToStorage({ config, state });
+  }, [config, state]);
+
+  const drawdownPct = calcDrawdown(state.startLevel, state.currentLevel, state.manualDrawdown);
+  const dd = drawdownPct * 100;
+  const deepCrash = isDeepCrashActive(drawdownPct);
+  const warnings = calcWarnings(config, state);
+
+  const addTransaction = (type, desc, amount) => {
+    const date = new Date().toLocaleDateString("en-IE");
+    setState(s => ({ ...s, transactions: [...(s.transactions || []), { date, type, desc, amount }] }));
+  };
+
+  const markMonth0 = () => {
+    if (state.month0Complete) return;
+    const m0 = config.month0Buys;
+    const newHoldings = { ...state.holdings };
+    Object.keys(m0).forEach(a => { newHoldings[a] = (newHoldings[a] || 0) + m0[a]; });
+    setState(s => ({ ...s, month0Complete: true, holdings: newHoldings }));
+    addTransaction("month0", "Month 0 initial investment — all assets", Object.values(m0).reduce((a, b) => a + b, 0));
+  };
+
+  const markDCA = (month) => {
+    if (state.dcaCompleted[String(month)]) return;
+    const buys = config.monthlyDCA.buys;
+    const newHoldings = { ...state.holdings };
+    let total = 0;
+    Object.keys(buys).forEach(a => { newHoldings[a] = (newHoldings[a] || 0) + buys[a]; total += buys[a]; });
+    setState(s => ({ ...s, dcaCompleted: { ...s.dcaCompleted, [String(month)]: true }, holdings: newHoldings }));
+    addTransaction("dca", `Month ${month} DCA — VWCE/XDW0/IBCI/ERNX/CMOE/SGLD`, total);
+  };
+
+  const markTriggerExecuted = (threshold) => {
+    const t = config.drawdownTriggers.find(t => t.threshold === threshold);
+    if (!t || state.triggersExecuted[String(threshold)]) return;
+    const newHoldings = { ...state.holdings };
+    Object.keys(t.buys).forEach(a => { newHoldings[a] = (newHoldings[a] || 0) + t.buys[a]; });
+    setState(s => ({
+      ...s,
+      triggersExecuted: { ...s.triggersExecuted, [String(threshold)]: { date: new Date().toLocaleDateString("en-IE") } },
+      holdings: newHoldings
+    }));
+    addTransaction("trigger", `Drawdown trigger ${threshold}% executed — VWCE + XDW0`, t.total);
+  };
+
+  const updateState = (updates) => setState(s => ({ ...s, ...updates }));
+  const resetState = () => { if (confirm("Reset all state? This cannot be undone.")) { setState(DEFAULT_STATE); } };
+
+  const importJSON = () => {
+    const input = document.createElement("input");
+    input.type = "file"; input.accept = ".json";
+    input.onchange = e => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (data.config) setConfig(data.config);
+          if (data.state) setState(data.state);
+          else if (!data.config) setState(data);
+          alert("Imported successfully.");
+        } catch { alert("Invalid JSON file."); }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
+  const currentMonth = state.currentMonth || 0;
+  const nextDCAMonth = (() => {
+    for (let m = 1; m <= 18; m++) { if (!state.dcaCompleted[String(m)]) return m; }
+    return null;
+  })();
+
+  return (
+    <div className="app">
+      {/* Header */}
+      <div className="header">
+        <div className="header-left">
+          <h1>Portfolio Deployment Dashboard</h1>
+          <span style={{ fontSize: "0.75rem", color: "var(--muted)", background: "var(--bg)", padding: "0.125rem 0.5rem", borderRadius: 10, border: "1px solid var(--border)" }}>{fmt(config.totalCapital)} · 18-month plan</span>
+        </div>
+        <div className="header-right">
+          <button className="btn small" onClick={importJSON}>⬆ Import</button>
+          <button className="btn small" onClick={() => window.print()}>⎙ Print</button>
+        </div>
+      </div>
+
+      {/* Banners */}
+      {deepCrash && (
+        <div className="banner crash">
+          <span className="banner-icon">⚡</span>
+          <div className="banner-text">
+            <strong>Deep-Crash Pivot Active (drawdown ≥ 30%)</strong>
+            <p>Pause all non-equity DCA (IBCI, ERNX, CMOE, SGLD). Redirect remaining unallocated capital toward VWCE and XDW0 until all crash deployment tranches are complete.</p>
+          </div>
+        </div>
+      )}
+      {warnings.length > 0 && !deepCrash && (
+        <div className="banner warn">
+          <span className="banner-icon">⚠</span>
+          <div className="banner-text">
+            <strong>{warnings.length} guardrail warning{warnings.length > 1 ? "s" : ""}</strong>
+            <p>{warnings[0].text}</p>
+          </div>
+        </div>
+      )}
+
+      {/* View toggle */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+        <div className="tab-bar" style={{ margin: 0 }}>
+          <button className={`tab ${view === "simple" ? "active" : ""}`} onClick={() => setView("simple")}>Simple View</button>
+          <button className={`tab ${view === "detailed" ? "active" : ""}`} onClick={() => setView("detailed")}>Detailed View</button>
+        </div>
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+          {!state.month0Complete && (
+            <button className="btn primary" onClick={markMonth0}>✓ Mark Month 0 complete</button>
+          )}
+          {nextDCAMonth && nextDCAMonth <= currentMonth && (
+            <button className="btn primary" onClick={() => markDCA(nextDCAMonth)}>✓ Mark Month {nextDCAMonth} DCA complete</button>
+          )}
+        </div>
+      </div>
+
+      {/* Summary Cards (both views) */}
+      <SummaryCards config={config} state={state} />
+
+      {view === "simple" ? (
+        <>
+          {/* Next Action */}
+          <div className="section">
+            <h2>Next Actions</h2>
+            <NextActionChecklist config={config} state={state} drawdownPct={drawdownPct} />
+          </div>
+
+          {/* Trigger Ladder */}
+          <div className="section">
+            <h2>Drawdown Trigger Ladder</h2>
+            <div style={{ marginBottom: "0.5rem", fontSize: "0.8125rem", color: "var(--muted)" }}>
+              Current drawdown: <strong style={{ color: dd <= -30 ? "var(--overdue)" : dd <= -10 ? "var(--fired)" : "inherit" }}>
+                {dd !== 0 || state.manualDrawdown !== null ? fmtPct(dd) + "%" : "Not set (enter in Settings)"}
+              </strong>
+            </div>
+            <TriggerLadder config={config} state={state} drawdownPct={drawdownPct} onMarkExecuted={markTriggerExecuted} />
+          </div>
+
+          {/* Allocation */}
+          <div className="section">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+              <h2 style={{ margin: 0 }}>Portfolio Allocation</h2>
+              <div className="tab-bar" style={{ margin: 0, padding: "0.125rem" }}>
+                <button className={`tab ${viewBy === "asset" ? "active" : ""}`} onClick={() => setViewBy("asset")}>By Asset</button>
+                <button className={`tab ${viewBy === "category" ? "active" : ""}`} onClick={() => setViewBy("category")}>By Category</button>
+              </div>
+            </div>
+            <AllocationBars config={config} state={state} viewBy={viewBy} />
+          </div>
+
+          {/* Timeline */}
+          <div className="section">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+              <h2 style={{ margin: 0 }}>18-Month Timeline</h2>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <span style={{ fontSize: "0.8125rem", color: "var(--muted)" }}>Current month:</span>
+                <input type="number" min={0} max={24} value={currentMonth}
+                  onChange={e => updateState({ currentMonth: parseInt(e.target.value) || 0 })}
+                  style={{ width: 60, padding: "0.25rem 0.5rem", border: "1px solid var(--border)", borderRadius: 6, fontSize: "0.875rem" }} />
+              </div>
+            </div>
+            <Timeline config={config} state={state} onMarkDCA={markDCA} />
+            {currentMonth > 18 && calcStagingRemaining(config, state) > 1 && (
+              <div className="banner warn" style={{ marginTop: "0.75rem", marginBottom: 0 }}>
+                <span className="banner-icon">⚠</span>
+                <div className="banner-text"><strong>Plan breach: temporary staging reserve should be fully allocated by Month 18 unless you deliberately changed the strategy.</strong></div>
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Capital Flow */}
+          <div className="section">
+            <h2>Capital Flow</h2>
+            <CapitalFlow config={config} state={state} />
+          </div>
+
+          {/* Allocation + Trigger */}
+          <div className="two-col">
+            <div className="section">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                <h2 style={{ margin: 0 }}>Allocation</h2>
+                <div className="tab-bar" style={{ margin: 0, padding: "0.125rem" }}>
+                  <button className={`tab ${viewBy === "asset" ? "active" : ""}`} onClick={() => setViewBy("asset")}>Asset</button>
+                  <button className={`tab ${viewBy === "category" ? "active" : ""}`} onClick={() => setViewBy("category")}>Category</button>
+                </div>
+              </div>
+              <AllocationBars config={config} state={state} viewBy={viewBy} />
+            </div>
+            <div className="section">
+              <h2>Trigger Ladder</h2>
+              <div style={{ marginBottom: "0.5rem", fontSize: "0.8125rem", color: "var(--muted)" }}>
+                Drawdown: <strong>{dd !== 0 || state.manualDrawdown !== null ? fmtPct(dd) + "%" : "Not set"}</strong>
+              </div>
+              <TriggerLadder config={config} state={state} drawdownPct={drawdownPct} onMarkExecuted={markTriggerExecuted} />
+            </div>
+          </div>
+
+          {/* Timeline */}
+          <div className="section">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+              <h2 style={{ margin: 0 }}>18-Month Timeline</h2>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <span style={{ fontSize: "0.8125rem", color: "var(--muted)" }}>Current month:</span>
+                <input type="number" min={0} max={24} value={currentMonth}
+                  onChange={e => updateState({ currentMonth: parseInt(e.target.value) || 0 })}
+                  style={{ width: 60, padding: "0.25rem 0.5rem", border: "1px solid var(--border)", borderRadius: 6, fontSize: "0.875rem" }} />
+              </div>
+            </div>
+            <Timeline config={config} state={state} onMarkDCA={markDCA} />
+          </div>
+
+          {/* Scenario Simulator */}
+          <div className="section">
+            <h2>Scenario Simulator</h2>
+            <ScenarioSimulator config={config} />
+          </div>
+
+          {/* Holdings Table */}
+          <div className="section">
+            <h2>Holdings vs Target</h2>
+            <HoldingsTable config={config} state={state} />
+          </div>
+
+          {/* Next Actions */}
+          <div className="section">
+            <h2>Full Next-Action Checklist</h2>
+            <NextActionChecklist config={config} state={state} drawdownPct={drawdownPct} />
+          </div>
+
+          {/* Warnings */}
+          <div className="section">
+            <h2>Guardrail Warnings</h2>
+            <WarningsPanel config={config} state={state} />
+          </div>
+
+          {/* Transaction Log + Settings side by side */}
+          <div className="two-col">
+            <div className="section">
+              <h2>Transaction Log</h2>
+              <TransactionLog state={state} onClear={() => setState(s => ({ ...s, transactions: [] }))} />
+            </div>
+            <div className="section">
+              <h2>Settings</h2>
+              <SettingsPanel config={config} state={state} onUpdateState={updateState} onUpdateConfig={setConfig} onReset={resetState} />
+            </div>
+          </div>
+
+          {/* Export */}
+          <div className="section">
+            <h2>Export / Import</h2>
+            <ExportPanel config={config} state={state} />
+          </div>
+
+          {/* Notes */}
+          <div className="section">
+            <h2>Notes</h2>
+            <textarea value={state.notes || ""} onChange={e => updateState({ notes: e.target.value })}
+              style={{ width: "100%", minHeight: 80, border: "1px solid var(--border)", borderRadius: 6, padding: "0.5rem 0.75rem", fontSize: "0.875rem", fontFamily: "inherit", resize: "vertical" }}
+              placeholder="Add notes about your plan, decisions, or market conditions…" />
+          </div>
+
+          {/* DCA Rounding Note */}
+          <div className="section" style={{ background: "#fffbeb", borderColor: "var(--warn-border)" }}>
+            <h3>Plan Note: DCA Rounding</h3>
+            <p style={{ fontSize: "0.8125rem", color: "var(--muted)", lineHeight: 1.6 }}>
+              The monthly DCA totals IBCI + CMOE + SGLD at €333/month each. Three × €333 = €999/month, making the true monthly total <strong>€2,999</strong> (not €3,000) and the 18-month total <strong>€53,982</strong> (not €54,000). The €18 shortfall is a rounding artefact and does not affect the plan's logic or the overall €300,000 total. The remaining €18 is effectively absorbed into the completion reserve.
+            </p>
+          </div>
+        </>
+      )}
+
+      {/* Footer */}
+      <div style={{ textAlign: "center", padding: "1.5rem 0", color: "var(--subtle)", fontSize: "0.75rem" }}>
+        Portfolio Deployment Dashboard · €300,000 · 18-month staged deployment plan · Data stored in browser localStorage
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>

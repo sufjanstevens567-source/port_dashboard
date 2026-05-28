@@ -1,0 +1,2153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Deployment Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f7f7f5;
+  --surface: #fff;
+  --border: #e5e5e2;
+  --text: #1a1a18;
+  --muted: #6b6b66;
+  --subtle: #9b9b96;
+  --accent: #1d4ed8;
+  --success: #16a34a;
+  --warn: #d97706;
+  --danger: #dc2626;
+  --staging: #8b5cf6;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+#app{max-width:1360px;margin:0 auto;padding:12px}
+/* ── Header ── */
+.hdr{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:10px;gap:8px;flex-wrap:wrap}
+.hdr-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hdr-right{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.hdr h1{font-size:1rem;font-weight:700}
+.badge{font-size:0.6875rem;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:2px 8px;color:var(--muted);white-space:nowrap}
+.price-status{font-size:0.75rem;color:var(--muted)}
+/* ── Buttons ── */
+.btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:0.8125rem;font-weight:500;transition:all .15s;white-space:nowrap}
+.btn:hover{background:var(--bg)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{background:#1e40af}
+.btn.sm{padding:3px 8px;font-size:0.75rem}
+.btn.danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.loading{opacity:.7;cursor:wait}
+/* ── Banners ── */
+.banner{border-radius:8px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:10px;border:1.5px solid}
+.banner.crash{background:#fef2f2;border-color:var(--danger)}
+.banner.warn{background:#fffbeb;border-color:#fbbf24}
+.banner.info{background:#eff6ff;border-color:#93c5fd}
+.banner-icon{font-size:1rem;flex-shrink:0;margin-top:1px}
+.banner-body strong{display:block;font-weight:600;font-size:.875rem;margin-bottom:2px}
+.banner-body p{font-size:.8125rem;color:var(--muted)}
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px;margin-bottom:10px;width:fit-content}
+.tab{padding:4px 14px;border-radius:6px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:.8125rem;font-weight:500;transition:all .15s}
+.tab.on{background:var(--text);color:#fff}
+.tab:hover:not(.on){background:var(--bg);color:var(--text)}
+/* ── Cards ── */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-bottom:10px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.card.ac{border-color:var(--accent);background:#eff6ff}
+.card.wc{border-color:#fbbf24;background:#fffbeb}
+.card.dc{border-color:var(--danger);background:#fef2f2}
+.card-lbl{font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:2px}
+.card-val{font-size:1.4rem;font-weight:700;line-height:1.2}
+.card-sub{font-size:.6875rem;color:var(--muted);margin-top:3px}
+.card-txt{font-size:.8125rem;font-weight:500;color:var(--accent);line-height:1.45}
+.pbar{height:8px;border-radius:4px;background:#e5e7eb;overflow:hidden;margin-top:5px}
+.pbar-fill{height:100%;border-radius:4px;background:var(--accent);transition:width .3s}
+/* ── Section ── */
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px}
+.sec h2{font-size:.9375rem;font-weight:600;margin-bottom:10px}
+.sec h3{font-size:.8125rem;font-weight:600;margin-bottom:6px}
+hr.div{border:none;border-top:1px solid var(--border);margin:10px 0}
+/* ── Trigger Ladder ── */
+.ladder{display:flex;flex-direction:column;gap:6px}
+.trig{border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.trig.fired{border-color:var(--warn);background:#fffbeb}
+.trig.done{border-color:var(--success);background:#f0fdf4;opacity:.78}
+.trig.wait{border-color:var(--border)}
+.trig-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0}
+.trig-dot.wait{background:#f3f4f6;color:var(--muted)}
+.trig-dot.fired{background:#fbbf24;color:#fff}
+.trig-dot.done{background:var(--success);color:#fff}
+.trig-info{flex:1;min-width:0}
+.trig-pct{font-size:.9375rem;font-weight:700}
+.trig-det{font-size:.6875rem;color:var(--muted);margin-top:1px}
+.trig-lbl{font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 7px;border-radius:10px;margin-left:6px}
+.trig-lbl.wait{background:#f3f4f6;color:var(--muted)}
+.trig-lbl.fired{background:#fef3c7;color:#92400e}
+.trig-lbl.done{background:#dcfce7;color:#166534}
+.trig-pivot{font-size:.6875rem;color:var(--danger);font-weight:500;margin-top:3px}
+/* ── Allocation chart wrapper ── */
+.chart-wrap{position:relative;height:260px}
+/* ── Timeline ── */
+.tl{display:flex;align-items:center;overflow-x:auto;padding-bottom:8px;gap:0}
+.tl-month{flex-shrink:0;width:48px;text-align:center}
+.tl-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:var(--surface);margin:0 auto 3px;cursor:pointer;transition:all .2s}
+.tl-dot.done{background:var(--success);border-color:var(--success)}
+.tl-dot.cur{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 3px #bfdbfe}
+.tl-lbl{font-size:.5625rem;color:var(--muted)}
+.tl-amt{font-size:.5rem;color:var(--subtle)}
+.tl-conn{flex:1;height:2px;background:var(--border);min-width:4px}
+.tl-conn.done{background:var(--success)}
+/* ── Table ── */
+.tbl{width:100%;border-collapse:collapse;font-size:.8125rem}
+.tbl th{text-align:left;padding:6px 10px;border-bottom:1.5px solid var(--border);font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.tbl td{padding:6px 10px;border-bottom:1px solid var(--bg)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--bg)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tfoot td{font-weight:600;border-top:2px solid var(--border);border-bottom:none}
+/* ── Checklist ── */
+.cl{display:flex;flex-direction:column;gap:6px}
+.cl-item{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:8px}
+.cl-item.urg{border-color:var(--danger);background:#fef2f2}
+.cl-item.act{border-color:var(--accent);background:#eff6ff}
+.cl-item.inf{background:#fafafa}
+.cl-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:.625rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cl-num.urg{background:var(--danger)}
+.cl-num.inf{background:var(--muted)}
+.cl-txt{font-size:.8125rem;line-height:1.5}
+/* ── Scenario ── */
+.sc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:10px}
+.sc-card{border:2px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .15s}
+.sc-card.on{border-color:var(--accent);background:#eff6ff}
+.sc-card:hover:not(.on){border-color:var(--muted)}
+.sc-card h3{font-size:.8125rem;margin-bottom:2px}
+.sc-card p{font-size:.6875rem;color:var(--muted)}
+.sc-result{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px}
+/* ── Settings inputs ── */
+.inp-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.inp-row label{font-size:.8125rem;color:var(--muted);width:200px;flex-shrink:0}
+.inp-row input,.inp-row select{padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:.8125rem;background:var(--surface);color:var(--text);width:160px}
+.inp-row input:focus,.inp-row select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.cap-inp{font-size:1.25rem!important;font-weight:700!important;width:200px!important;border-color:var(--accent)!important}
+/* ── Flow ── */
+.flow-node{border-radius:6px;padding:5px 10px;font-size:.8125rem;font-weight:500;border:1px solid;display:inline-block}
+.fn-total{background:#1e293b;color:#fff;border-color:#1e293b}
+.fn-inv{background:#dbeafe;color:#1e40af;border-color:#93c5fd}
+.fn-stage{background:#ede9fe;color:#5b21b6;border-color:#c4b5fd}
+.fn-dca{background:#e0f2fe;color:#0369a1;border-color:#7dd3fc}
+.fn-dd{background:#fef3c7;color:#92400e;border-color:#fcd34d}
+.fn-res{background:#dcfce7;color:#166534;border-color:#86efac}
+/* ── Warnings ── */
+.warn-list{display:flex;flex-direction:column;gap:6px}
+.warn-item{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;border-radius:6px;font-size:.8125rem}
+.warn-item.hot{background:#fef2f2;border:1px solid #fca5a5}
+.warn-item.ok{background:#f0fdf4;border:1px solid #86efac;color:var(--muted)}
+/* ── Export ── */
+.export-pre{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:'Courier New',monospace;font-size:.6875rem;white-space:pre-wrap;word-break:break-all;max-height:260px;overflow-y:auto}
+/* ── Misc ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.tag{font-size:.625rem;font-weight:600;padding:1px 7px;border-radius:10px;display:inline-block}
+.tag.eq{background:#dbeafe;color:#1e40af}
+.tag.def{background:#dcfce7;color:#166534}
+.tag.real{background:#fef3c7;color:#92400e}
+.tag.m0{background:#ede9fe;color:#5b21b6}
+.dot-chip{width:10px;height:10px;border-radius:2px;flex-shrink:0;display:inline-block}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:.6875rem;color:var(--muted)}
+.gap-bar{height:6px;border-radius:3px;background:#e5e7eb;overflow:hidden;margin-top:3px}
+.gap-fill{height:100%;border-radius:3px;transition:width .3s}
+.toast{position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:10px 16px;border-radius:8px;font-size:.8125rem;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;max-width:320px}
+.toast.show{opacity:1}
+textarea.notes{width:100%;min-height:72px;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:.8125rem;font-family:inherit;resize:vertical}
+/* ── Collapsible detail groups ── */
+.dg{margin-bottom:8px}
+.dg-hdr{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 16px;cursor:pointer;user-select:none;transition:background .15s}
+.dg-hdr.open{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.dg-hdr:hover{background:var(--bg)}
+.dg-title{font-size:.9375rem;font-weight:600}
+.dg-body{border:1px solid var(--border);border-top:none;border-bottom-left-radius:8px;border-bottom-right-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.dg-body>.sec,.dg-body>.two-col,.dg-body>.three-col{margin-bottom:0}
+@media(max-width:700px){.two-col,.three-col{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}}
+@media print{.btn,.tabs{display:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="root"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════════════════════
+// 1. CONSTANTS
+// ══════════════════════════════════════════════════════════════════
+const STORAGE_KEY = 'portfolio_v3';
+const USER_EMAIL  = 'sufjanstevens567@gmail.com';
+const GMAIL_TOOL  = 'mcp__5e0a97ec-db52-4e61-b73b-f650e2a2546c__create_draft';
+const ASSETS      = ['VWCE','XDW0','IBCI','ERNX','Cash','CMOE','SGLD'];
+const DCA_ASSETS  = ['VWCE','XDW0','IBCI','ERNX','CMOE','SGLD'];
+
+const ASSET_COLORS = {
+  VWCE:'#2563eb', XDW0:'#0ea5e9', IBCI:'#059669', ERNX:'#34d399',
+  Cash:'#16a34a', CMOE:'#d97706', SGLD:'#f59e0b', Staging:'#8b5cf6'
+};
+const ASSET_CAT = {
+  VWCE:'Global Equities', XDW0:'Energy Equities',
+  IBCI:'Defensive', ERNX:'Defensive', Cash:'Perm. Cash (Defensive)',
+  CMOE:'Real Assets', SGLD:'Real Assets'
+};
+
+// ── Plan ratios (all proportional to total capital) ──────────────
+const PLAN = {
+  month0Frac:  {VWCE:25/300, XDW0:3.5/300, IBCI:25/300, ERNX:35/300, Cash:15/300, CMOE:18/300, SGLD:28.5/300},
+  targetFrac:  {VWCE:.35, XDW0:.05, IBCI:.125, ERNX:.175, Cash:.05, CMOE:.125, SGLD:.125},
+  dcaFrac:     {VWCE:1.25/300, XDW0:.25/300, IBCI:.333/300, ERNX:.5/300, CMOE:.333/300, SGLD:.333/300},
+  triggers: [
+    {threshold:-10, frac:10/300, vf:8.75/300,   xf:1.25/300},
+    {threshold:-20, frac:14/300, vf:12.25/300,  xf:1.75/300},
+    {threshold:-30, frac:15/300, vf:13.125/300, xf:1.875/300, pivot:true},
+    {threshold:-40, frac:20/300, vf:17.5/300,   xf:2.5/300},
+    {threshold:-48, frac:22/300, vf:19.25/300,  xf:2.75/300}
+  ]
+};
+
+function deriveConfig(T) {
+  const r = f => Math.round(T * f);
+  return {
+    totalCapital: T,
+    baseTargets:  Object.fromEntries(ASSETS.map(a=>[a, r(PLAN.targetFrac[a])])),
+    month0Buys:   Object.fromEntries(ASSETS.map(a=>[a, r(PLAN.month0Frac[a])])),
+    monthlyDCA:   Object.fromEntries(DCA_ASSETS.map(a=>[a, r(PLAN.dcaFrac[a])])),
+    triggers: PLAN.triggers.map(t=>({
+      threshold: t.threshold,
+      total: r(t.frac),
+      VWCE: r(t.vf), XDW0: r(t.xf),
+      pivot: !!t.pivot
+    })),
+    dcaMonths: 18,
+    drawdownReserve: r(81/300),
+    completionReserve: r(15/300),
+    dcaTotal: r(54/300)
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 2. STATE
+// ══════════════════════════════════════════════════════════════════
+const DEFAULT_STATE = {
+  totalCapital: 300000,
+  currentMonth: 0,
+  startDate: '',
+  startLevel: '',    // S&P 500 level on Day 1 of plan — reference for drawdown triggers
+  currentLevel: '',  // Current S&P 500 level — updated manually
+  athLevel: '',      // Optional: all-time high level — for context only, not used for triggers
+  manualDrawdown: '', // Direct % override — takes priority over start/current levels
+  month0Complete: false,
+  dcaCompleted: {},
+  triggersExecuted: {},
+  triggersAlerted: {},
+  holdings: {VWCE:0, XDW0:0, IBCI:0, ERNX:0, Cash:0, CMOE:0, SGLD:0},
+  transactions: [],
+  notes: '',
+  activeView: 'simple',
+  viewBy: 'asset',
+  activeScenario: 'none',
+  monitorTaskUpdated: false,        // has user confirmed they updated the scheduled monitoring task?
+  dcaDay: null,                     // day-of-month for monthly buys (1–28)
+  lastExportedAt: null,             // timestamp of last manual export
+  lastPriceUpdatedAt: null,         // timestamp of last S&P 500 level update
+  deepCrashPivotActivated: false,   // latching — set when market drops to ≤−30%, never auto-cleared
+  marketValues: {},                 // optional current market value per asset (for P&L tracking)
+  detailSectionCollapsed: {}        // collapse state for detailed-view section groups
+};
+
+// ATH drawdown — optional, context-only (not used for trigger logic)
+function getATHDrawdownPct() {
+  const ath = parseFloat(S.athLevel);
+  const cl  = parseFloat(S.currentLevel);
+  if (ath > 0 && cl > 0) return (cl - ath) / ath * 100;
+  return null;
+}
+
+let S = {};  // current state
+let C = {};  // derived config
+let allocationChart = null;
+let guideChart = null;
+let undoState = null;  // snapshot before last destructive action
+let undoTimer = null;
+
+// ── Asset guide data ─────────────────────────────────────────────
+const ASSET_GUIDE = {
+  VWCE: {
+    full:  'Vanguard FTSE All-World UCITS ETF (Acc)',
+    role:  'Core global equity exposure — long-term growth engine',
+    what:  'Tracks ~3,600 stocks across 49 markets. ~65% US, ~10% Europe, ~8% Japan, ~5% EM. Accumulating (dividends reinvested automatically).',
+    why:   'The largest allocation in this portfolio. Broad diversification means no single company, sector, or country dominates. The primary vehicle for capturing global economic growth.',
+    chars: ['High long-term growth potential','High short-term volatility','Benefits from crash-pivot overweight strategy','Low cost (~0.22% TER)'],
+    color: '#2563eb',
+    // Approximate annual returns 2019–2024 (illustrative)
+    returns: [27, 17, 19, -19, 21, 18]
+  },
+  XDW0: {
+    full:  'iShares MSCI World Energy Sector UCITS ETF',
+    role:  'Energy & inflation-sensitive equities — commodity cycle hedge',
+    what:  'Global energy companies: oil majors (ExxonMobil, Shell, TotalEnergies), gas producers, pipelines, and some renewables. Concentrated sector bet.',
+    why:   'Energy stocks tend to outperform during inflation spikes and commodity supercycles — the opposite of when broad equities struggle. A deliberate diversifier against the scenarios most painful for VWCE.',
+    chars: ['High volatility and cyclicality','Positive correlation with oil & gas prices','Inflation hedge within equities','Small allocation (5%) limits drawdown risk'],
+    color: '#0ea5e9',
+    returns: [14, -30, 38, 53, -5, 8]
+  },
+  IBCI: {
+    full:  'iShares € Inflation Linked Govt Bond UCITS ETF',
+    role:  'Euro inflation-linked government bonds — real return protection',
+    what:  'Eurozone government bonds (German, French, Italian, Spanish) indexed to HICP inflation. Principal and coupons adjust upward as inflation rises.',
+    why:   'Protects real purchasing power. Unlike nominal bonds, IBCI holds its value when inflation surprises to the upside. Provides stability when equities fall without being eroded by inflation.',
+    chars: ['Low to medium volatility','Positive return in high-inflation environments','Paused under deep-crash pivot rule','Duration risk — falls if real yields rise sharply'],
+    color: '#059669',
+    returns: [10, 5, -1, -18, 4, 3]
+  },
+  ERNX: {
+    full:  'iShares EUR Ultrashort Bond UCITS ETF',
+    role:  'Cash-like EUR defence — yield with minimal duration risk',
+    what:  'Very short-duration EUR bonds (average maturity < 1 year): commercial paper, short-term government bonds, covered bonds. Essentially a cash-plus instrument.',
+    why:   'Earns near-cash rates (currently ~3–4% EUR) with almost no interest rate sensitivity. Provides a defensive anchor for the portfolio while generating meaningful yield. Largest single allocation after VWCE.',
+    chars: ['Very low volatility','Near-zero duration (minimal rate sensitivity)','Earns EUR short-term rates','Paused under deep-crash pivot rule'],
+    color: '#34d399',
+    returns: [1, -0.5, -0.5, 0.5, 4, 4]
+  },
+  Cash: {
+    full:  'Cash (savings account / money market)',
+    role:  'Maximum liquidity — permanent strategic reserve',
+    what:  'Held in a high-interest savings account or money market fund in EUR. Not an ETF — pure cash.',
+    why:   'Permanently held as a 5% allocation for maximum optionality. Never deployed into other assets. Earns deposit rates and is available instantly for unexpected needs or extreme opportunities.',
+    chars: ['Zero market risk','Earns current deposit/money market rate','Fully liquid at all times','Permanent allocation — not part of staging reserve'],
+    color: '#16a34a',
+    returns: [0.5, 0.1, 0.1, 1.5, 3.5, 4]
+  },
+  CMOE: {
+    full:  'Invesco Bloomberg Commodity UCITS ETF',
+    role:  'Broad commodities — inflation and stagflation hedge',
+    what:  'Tracks the Bloomberg Commodity Index: ~30% energy, ~20% agriculture, ~20% industrial metals, ~15% precious metals, ~15% livestock. Diversified across physical commodity markets.',
+    why:   'Commodities tend to perform well in stagflation (when both equities and bonds struggle). Provides genuine diversification — low long-term correlation to both equities and bonds.',
+    chars: ['Medium to high volatility','Strong inflation hedge','Low correlation to equities and bonds','Paused under deep-crash pivot rule'],
+    color: '#d97706',
+    returns: [7, -10, 28, 16, -8, 3]
+  },
+  SGLD: {
+    full:  'Invesco Physical Gold ETC',
+    role:  'Gold — crisis hedge and currency debasement protection',
+    what:  'Backed by allocated physical gold held in secure vaults. Tracks the gold spot price in USD, converted to EUR. An ETC (exchange-traded commodity), not a fund.',
+    why:   'Gold historically performs best in genuine crises: currency debasement, financial system stress, geopolitical shocks. Its low and sometimes negative correlation to equities makes it a genuine portfolio diversifier. Largest initial allocation alongside ERNX.',
+    chars: ['Medium volatility','Negative to zero correlation with equities in crises','No yield (pure price appreciation)','Paused under deep-crash pivot rule'],
+    color: '#f59e0b',
+    returns: [19, 25, -3, 0, 13, 27]
+  }
+};
+const GUIDE_YEARS = ['2019','2020','2021','2022','2023','2024'];
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) S = Object.assign({}, DEFAULT_STATE, JSON.parse(raw));
+    else S = {...DEFAULT_STATE};
+  } catch { S = {...DEFAULT_STATE}; }
+  C = deriveConfig(S.totalCapital || 300000);
+}
+
+function saveState() {
+  try {
+    const payload = JSON.stringify(S);
+    localStorage.setItem(STORAGE_KEY, payload);
+    // Keep a rolling auto-backup — survives accidental clears of the primary key
+    if (S.month0Complete) localStorage.setItem(STORAGE_KEY + '_backup', payload);
+  } catch {}
+}
+
+function recoverFromBackup() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY + '_backup');
+    if (!raw) { toast('No backup found', 4000); return; }
+    S = Object.assign({}, DEFAULT_STATE, JSON.parse(raw));
+    C = deriveConfig(S.totalCapital || 300000);
+    saveState(); render();
+    toast('State recovered from auto-backup ✓');
+  } catch { toast('Backup recovery failed', 4000); }
+}
+
+// ── Market value & P&L helpers ────────────────────────────────────
+function getMV(a) {
+  const v = S.marketValues && parseFloat(S.marketValues[a]);
+  return (v > 0) ? v : (S.holdings[a] || 0);
+}
+function hasAnyMV() { return S.marketValues && ASSETS.some(a => parseFloat(S.marketValues[a]) > 0); }
+function getTotalMV()  { return ASSETS.reduce((s, a) => s + getMV(a), 0); }
+function getPnL()      { return getTotalMV() - getTotalInvested(); }
+
+// ── Detail section collapse helpers ──────────────────────────────
+function isSecCollapsed(sec) {
+  const d = S.detailSectionCollapsed || {};
+  return d[sec] !== undefined ? d[sec] : sec !== 'status';
+}
+
+function detailGroup(id, icon, label, content) {
+  const collapsed = isSecCollapsed(id);
+  return `
+    <div class="dg">
+      <div class="dg-hdr ${collapsed?'':'open'}" data-action="toggle-detail-section" data-section="${id}">
+        <span class="dg-title">${icon}&nbsp; ${label}</span>
+        <span style="font-size:.75rem;color:var(--muted)">${collapsed?'▼ Expand':'▲ Collapse'}</span>
+      </div>
+      ${!collapsed ? `<div class="dg-body">${content}</div>` : ''}
+    </div>`;
+}
+
+function setState(updates) {
+  Object.assign(S, updates);
+  if (updates.totalCapital) C = deriveConfig(updates.totalCapital);
+  saveState();
+  render();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 3. FORMATTING
+// ══════════════════════════════════════════════════════════════════
+const fmt  = n => (n==null||isNaN(n)) ? '—' : '€'+Math.round(n).toLocaleString('en-IE');
+const fmtP = n => (n==null||isNaN(n)) ? '—' : n.toFixed(1)+'%';
+const fmtDate = iso => iso ? new Date(iso).toLocaleString('en-IE',{dateStyle:'short',timeStyle:'short'}) : '—';
+
+// ══════════════════════════════════════════════════════════════════
+// 4. CALCULATIONS
+// ══════════════════════════════════════════════════════════════════
+function getDrawdown() {
+  if (S.manualDrawdown !== '' && S.manualDrawdown !== null && S.manualDrawdown !== undefined) {
+    const v = parseFloat(S.manualDrawdown);
+    return isNaN(v) ? 0 : v / 100;
+  }
+  const sl = parseFloat(S.startLevel), cl = parseFloat(S.currentLevel);
+  if (sl > 0 && cl > 0) return (cl - sl) / sl;
+  return 0;
+}
+
+function getDrawdownPct() { return getDrawdown() * 100; }
+
+function getTotalInvested() {
+  return Object.values(S.holdings).reduce((a,b)=>a+(b||0),0);
+}
+
+function getStagingRemaining() { return C.totalCapital - getTotalInvested(); }
+
+function getTriggerStatus(t) {
+  if (S.triggersExecuted[String(t.threshold)]) return 'done';
+  const dd = getDrawdownPct();
+  if (dd <= t.threshold) return 'fired';
+  return 'wait';
+}
+
+function isDeepCrash() { return getDrawdownPct() <= -30; }
+
+// Fix #7 — auto-detect expected plan month from start date
+function getExpectedPlanMonth() {
+  if (!S.startDate) return null;
+  const start = new Date(S.startDate);
+  if (isNaN(start.getTime())) return null;
+  const now = new Date();
+  const months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+  return Math.max(0, Math.min(18, months));
+}
+
+// Fix #2 — single authoritative action object used by the action banner
+// Returns { cls, icon, title, text, btn } where btn is optional HTML string
+function buildActionBanner() {
+  const dd      = getDrawdownPct();
+  const staging = getStagingRemaining();
+  const m       = S.currentMonth || 0;
+  const mLeft   = Math.max(0, 18 - m);
+
+  // 1. Unfired triggers — highest priority
+  const firedTriggers = C.triggers.filter(t => getTriggerStatus(t) === 'fired');
+  if (firedTriggers.length === 1) {
+    const t = firedTriggers[0];
+    return { cls:'crash', icon:'⚡',
+      title: `Urgent: market is down ${Math.abs(t.threshold)}% from your plan start`,
+      text:  `Deploy ${fmt(t.total)} now — ${fmt(t.VWCE)} into VWCE and ${fmt(t.XDW0)} into XDW0. This is a pre-planned opportunistic buy, not a panic move.`,
+      btn:   `<button class="btn danger sm" data-action="execute-trigger" data-threshold="${t.threshold}">Mark executed ✓</button>` };
+  }
+  if (firedTriggers.length > 1) {
+    const totalDeploy = firedTriggers.reduce((s,t)=>s+t.total,0);
+    const btns = firedTriggers.map(t=>`<button class="btn danger sm" data-action="execute-trigger" data-threshold="${t.threshold}" style="margin:2px">${t.threshold}% ✓</button>`).join('');
+    return { cls:'crash', icon:'⚡',
+      title: `Urgent: ${firedTriggers.length} buy triggers fired`,
+      text:  `Market has fallen through ${firedTriggers.length} thresholds. Total to deploy: ${fmt(totalDeploy)}. Execute each trigger below.`,
+      btn:   `<div style="display:flex;flex-wrap:wrap;gap:4px">${btns}</div>` };
+  }
+  // 2. Past Month 18 deadline
+  if (m > 18 && staging > 1) {
+    return { cls:'crash', icon:'⚠',
+      title: 'Past your 18-month deployment deadline',
+      text:  `${fmt(staging)} is still undeployed. Your plan required full allocation by Month 18.`,
+      btn:   '' };
+  }
+  // 3. Initial investment not yet done
+  if (!S.month0Complete) {
+    const b = C.month0Buys;
+    return { cls:'info', icon:'[1]',
+      title: 'First action: make your initial lump-sum investment',
+      text:  `Buy across all assets: ${fmt(b.VWCE)} VWCE · ${fmt(b.XDW0)} XDW0 · ${fmt(b.IBCI)} IBCI · ${fmt(b.ERNX)} ERNX · ${fmt(b.Cash)} Cash · ${fmt(b.CMOE)} CMOE · ${fmt(b.SGLD)} SGLD`,
+      btn:   `<button class="btn primary sm" data-action="mark-month0">Mark done ✓</button>` };
+  }
+  // 4. Monthly buy overdue
+  for (let i = 1; i <= m && i <= 18; i++) {
+    if (!S.dcaCompleted[String(i)]) {
+      const d = C.monthlyDCA;
+      return { cls:'warn', icon:'→',
+        title: `Month ${i} monthly buy is due`,
+        text:  `Buy: ${fmt(d.VWCE)} VWCE · ${fmt(d.XDW0)} XDW0 · ${fmt(d.IBCI)} IBCI · ${fmt(d.ERNX)} ERNX · ${fmt(d.CMOE)} CMOE · ${fmt(d.SGLD)} SGLD`,
+        btn:   `<button class="btn primary sm" data-action="mark-dca" data-month="${i}">Mark done ✓</button>` };
+    }
+  }
+  // 5. Deep crash — no specific trigger, but pivot needed
+  if (isDeepCrash()) {
+    return { cls:'crash', icon:'⚡',
+      title: 'Market down 30%+ — pivot to equities only',
+      text:  'Stop monthly buys for IBCI, ERNX, CMOE, SGLD. Use all remaining undeployed capital to buy VWCE and XDW0.',
+      btn:   '' };
+  }
+  // 6. Month 18 approaching
+  if (m >= 13 && staging > 1 && mLeft > 0) {
+    return { cls:'warn', icon:'⏱',
+      title: `Month 18 approaching — ${mLeft} months left to fully invest`,
+      text:  `${fmt(staging)} still to deploy. Aim for ~${fmt(staging/mLeft)}/month to meet the deadline.`,
+      btn:   '' };
+  }
+  // 6b. Post-depletion: all triggers executed, staging gone, still in a crash
+  const allTriggersExecuted = C.triggers.every(t => S.triggersExecuted[String(t.threshold)]);
+  if (allTriggersExecuted && staging <= 1 && dd <= -30 && S.month0Complete) {
+    return { cls:'info', icon:'✓',
+      title: 'All reserves deployed — fully invested during a market crash',
+      text:  `All 5 opportunistic triggers have fired and your staging reserve is fully deployed. No further action under this plan. Stay the course — your portfolio is positioned to recover when markets normalise.${m < 18 ? ' Monthly DCA continues as normal.' : ''}`,
+      btn:   '' };
+  }
+  // 6c. Deep-crash recovery: market recovered above −30% but pivot was previously activated
+  if (S.deepCrashPivotActivated && !isDeepCrash() && S.month0Complete) {
+    return { cls:'warn', icon:'🔄',
+      title: 'Market has recovered above the deep-crash pivot level',
+      text:  `Market is now at ${fmtP(dd)} — above your −30% pivot threshold. Your portfolio is likely equity-heavy from the pivot. Consider gradually resuming IBCI, ERNX, CMOE, and SGLD DCA over the next 2–4 months to return toward your base targets.`,
+      btn:   `<button class="btn primary sm" data-action="clear-pivot-flag">Acknowledge recovery ✓</button>` };
+  }
+  // 7. All good
+  const nextT = C.triggers.find(t => getTriggerStatus(t) === 'wait');
+  const ddSet = (S.manualDrawdown!==''&&S.manualDrawdown!=null)||(parseFloat(S.startLevel)>0&&parseFloat(S.currentLevel)>0);
+  if (!ddSet && S.month0Complete) {
+    return { cls:'warn', icon:'👁',
+      title: 'Drawdown monitoring inactive',
+      text:  'Enter your Day 1 S&P 500 level in the Price Tracker below to activate buy-trigger detection. Without it, you\'ll miss opportunistic buys.',
+      btn:   '' };
+  }
+  if (ddSet && !S.monitorTaskUpdated && S.month0Complete) {
+    return { cls:'warn', icon:'📡',
+      title: 'Daily email alerts not yet active',
+      text:  `Your automated monitoring task still has a placeholder start level. Open the Scheduled sidebar → portfolio-sp500-monitor and replace SET_THIS_ONCE with your start level (${parseFloat(S.startLevel)>0 ? S.startLevel : 'your Day 1 S&P 500 level'}) to activate daily email alerts.`,
+      btn:   `<button class="btn primary sm" data-action="mark-monitor-done">Done ✓</button>` };
+  }
+  return { cls:'info', icon:'✓',
+    title: 'On track — continue your monthly buys',
+    text:  nextT
+      ? `No market drop to act on (drawdown: ${fmtP(dd)}). Continue monthly buys. Next opportunistic trigger: market drops ${Math.abs(nextT.threshold)}% from your start → deploy ${fmt(nextT.total)}.`
+      : m >= 18 && staging <= 1 ? 'Plan complete — all capital deployed.'
+      : `Continue monthly buys. ${fmt(staging)} still to invest over ${mLeft} months.`,
+    btn: '' };
+}
+
+function calcWarnings() {
+  const dd = getDrawdownPct();
+  const invested = getTotalInvested();
+  const staging = getStagingRemaining();
+  const warnings = [];
+  C.triggers.forEach(t => {
+    if (getTriggerStatus(t)==='fired') warnings.push(`Trigger ${t.threshold}% fired but not executed. Deploy ${fmt(t.total)}.`);
+  });
+  if ((S.currentMonth||0) > 18 && staging > 1) warnings.push(`Past Month 18. ${fmt(staging)} staging reserve unallocated.`);
+  if (invested > C.totalCapital + 1) warnings.push(`Total deployed (${fmt(invested)}) exceeds total capital (${fmt(C.totalCapital)}).`);
+  if (isDeepCrash() && (S.currentMonth||0) < 18) warnings.push(`Deep-crash pivot active. Pause monthly buys for IBCI, ERNX, CMOE, SGLD. Redirect all remaining capital to VWCE/XDW0.`);
+  return warnings;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 5. ACTIONS
+// ══════════════════════════════════════════════════════════════════
+function addTx(type, desc, amount) {
+  const date = new Date().toLocaleDateString('en-IE');
+  S.transactions = [...(S.transactions||[]), {date, type, desc, amount}];
+}
+
+function markMonth0() {
+  if (S.month0Complete) return;
+  saveUndoState();
+  const buys = C.month0Buys;
+  const h = {...S.holdings};
+  ASSETS.forEach(a => { h[a] = (h[a]||0) + buys[a]; });
+  addTx('month0','Month 0 initial investment', Object.values(buys).reduce((a,b)=>a+b,0));
+  setState({month0Complete:true, holdings:h});
+  toast('Month 0 marked complete ✓', 15000, true);
+}
+
+function markDCA(m) {
+  if (S.dcaCompleted[String(m)]) return;
+  saveUndoState();
+  const d = C.monthlyDCA;
+  const h = {...S.holdings};
+  let total = 0;
+  DCA_ASSETS.forEach(a => { h[a]=(h[a]||0)+d[a]; total+=d[a]; });
+  addTx('dca',`Month ${m} monthly buy`, total);
+  setState({dcaCompleted:{...S.dcaCompleted,[String(m)]:true}, holdings:h});
+  toast(`Month ${m} monthly buy marked complete ✓`, 15000, true);
+}
+
+function executeTrigger(threshold) {
+  const t = C.triggers.find(x=>x.threshold===threshold);
+  if (!t || S.triggersExecuted[String(threshold)]) return;
+  saveUndoState();
+  const h = {...S.holdings};
+  h.VWCE = (h.VWCE||0) + t.VWCE;
+  h.XDW0 = (h.XDW0||0) + t.XDW0;
+  addTx('trigger',`Drawdown trigger ${threshold}% executed`, t.total);
+  setState({
+    triggersExecuted:{...S.triggersExecuted,[String(threshold)]:{date:new Date().toLocaleDateString('en-IE')}},
+    holdings:h
+  });
+  toast(`Trigger ${threshold}% executed ✓`, 15000, true);
+}
+
+function toast(msg, dur=3000, undoable=false) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  if (undoable && undoState) {
+    el.innerHTML = `${msg} &nbsp;<button onclick="undoLastAction()" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:.75rem;margin-left:4px">Undo</button>`;
+  } else {
+    el.textContent = msg;
+  }
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), dur);
+}
+
+function saveUndoState() {
+  undoState = JSON.parse(JSON.stringify(S));
+  if (undoTimer) clearTimeout(undoTimer);
+  undoTimer = setTimeout(() => { undoState = null; }, 15000);
+}
+
+function undoLastAction() {
+  if (!undoState) return;
+  S = undoState;
+  undoState = null;
+  C = deriveConfig(S.totalCapital || 300000);
+  saveState();
+  render();
+  toast('Action undone ✓');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 6. TRIGGER ALERTS (Gmail draft)
+// ══════════════════════════════════════════════════════════════════
+
+// Call this whenever drawdown may have changed (price or manual entry updated).
+// Compares previous DD to new DD and creates Gmail draft alerts for any newly-fired triggers.
+async function checkAndAlertTriggers(prevDD, newDD) {
+  const alerted = S.triggersAlerted || {};
+  const newlyFired = C.triggers.filter(t => {
+    const key = String(t.threshold);
+    return newDD <= t.threshold && prevDD > t.threshold && !alerted[key] && !S.triggersExecuted[key];
+  });
+  if (!newlyFired.length) return;
+
+  for (const t of newlyFired) {
+    const key = String(t.threshold);
+    try {
+      await window.cowork.callMcpTool(GMAIL_TOOL, {
+        to: [USER_EMAIL],
+        subject: `⚡ Portfolio trigger fired: ${t.threshold}% drawdown`,
+        htmlBody: `<h2 style="color:#dc2626">Drawdown trigger ${t.threshold}% has fired</h2>
+<p>Your S&amp;P 500 drawdown from your plan start has reached <strong>${fmtP(newDD)}</strong>.</p>
+<h3>Action required</h3>
+<p>Deploy <strong>${fmt(t.total)}</strong>:</p>
+<ul><li><strong>${fmt(t.VWCE)}</strong> into VWCE</li><li><strong>${fmt(t.XDW0)}</strong> into XDW0</li></ul>
+${t.pivot ? '<p style="color:#dc2626"><strong>⚡ Deep-crash pivot activates at this level.</strong> Pause DCA for IBCI, ERNX, CMOE, SGLD and redirect remaining capital to VWCE/XDW0.</p>' : ''}
+<hr><p style="font-size:12px;color:#666">Generated by your Portfolio Deployment Dashboard · ${new Date().toLocaleString('en-IE')}</p>`
+      });
+      setState({triggersAlerted:{...S.triggersAlerted,[key]:true}});
+      toast(`📧 Gmail draft created for ${t.threshold}% trigger`);
+    } catch(e) {
+      toast(`Gmail alert failed: ${e.message}`, 5000);
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 7. SCENARIO ENGINE
+// ══════════════════════════════════════════════════════════════════
+const SCENARIOS = [
+  {id:'none',   label:'No Correction',       dd:0,   desc:'Markets rise; no triggers fire.'},
+  {id:'bear22', label:'2022-style Bear',      dd:-22, desc:'−20 to −25%; two triggers fire.'},
+  {id:'covid',  label:'COVID / 1987 Crash',   dd:-33, desc:'~−33% fast crash; pivot activates.'},
+  {id:'dotcom', label:'Dot-com / GFC Deep',   dd:-50, desc:'−48–55%; all triggers fire.'}
+];
+
+function runScenario(dd) {
+  const fired = C.triggers.filter(t => dd <= t.threshold);
+  const tCap  = fired.reduce((s,t)=>s+t.total, 0);
+  const deep  = dd <= -30;
+  const stLeft = deep ? 0 : 0; // no-crash or crash: all deploys by M18
+  return {fired, tCap, deep, stLeft,
+    desc: deep
+      ? `Deep-crash pivot fires at −30%. ${fired.length} trigger(s) deploy ${fmt(tCap)} into VWCE/XDW0. Remaining capital also redirects to equities. Final allocation intentionally equity-heavy.`
+      : fired.length === 0
+        ? `No triggers fire. All DCA runs. Completion reserve + unused drawdown reserve deploy into base targets by Month 18. Fully allocated at Month 18.`
+        : `${fired.length} trigger(s) fire, deploying ${fmt(tCap)} into VWCE/XDW0. No deep-crash pivot. Remaining reserve deploys into base targets by Month 18.`
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 8. RENDER HELPERS
+// ══════════════════════════════════════════════════════════════════
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  if (attrs) Object.entries(attrs).forEach(([k,v])=>{
+    if (k==='class') el.className=v;
+    else if (k==='style') el.style.cssText=v;
+    else if (k.startsWith('data-')) el.setAttribute(k,v);
+    else el[k]=v;
+  });
+  children.forEach(c=>{
+    if (c==null) return;
+    if (typeof c==='string'||typeof c==='number') el.appendChild(document.createTextNode(String(c)));
+    else if (c instanceof Node) el.appendChild(c);
+    else if (Array.isArray(c)) c.forEach(ch=>ch instanceof Node && el.appendChild(ch));
+  });
+  return el;
+}
+function div(cls,content){ const d=document.createElement('div'); if(cls)d.className=cls; if(content)d.innerHTML=content; return d; }
+
+function setHtml(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 9. RENDER SECTIONS
+// ══════════════════════════════════════════════════════════════════
+
+// ── Header ────────────────────────────────────────────────────────
+function renderHeader() {
+  const dd    = getDrawdownPct();
+  const ddSet = (S.manualDrawdown!==''&&S.manualDrawdown!=null) ||
+                (parseFloat(S.startLevel)>0 && parseFloat(S.currentLevel)>0);
+  const ddBadge = ddSet
+    ? `<span class="badge" style="${dd<=-30?'background:#fef2f2;border-color:#fca5a5;color:#dc2626':dd<=-10?'background:#fffbeb;border-color:#fcd34d;color:#92400e':'background:#f0fdf4;border-color:#86efac;color:#166534'}">
+        ${dd<=-30?'⚡ Deep-crash pivot':dd<=-10?'⚠ Trigger zone':'✓ No trigger'} · ${fmtP(dd)}
+      </span>`
+    : `<span class="badge" style="color:var(--muted)">Drawdown not set — see tracker below</span>`;
+  setHtml('hdr', `
+    <div class="hdr-left">
+      <h1>Portfolio Dashboard</h1>
+      <div style="display:flex;align-items:center;gap:5px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:4px 10px">
+        <span style="font-size:.75rem;font-weight:600;color:var(--accent)">Total capital</span>
+        <span style="font-size:.75rem;color:var(--muted)">€</span>
+        <input type="number" step="1000" min="10000"
+          value="${S.totalCapital||300000}"
+          data-action="set-capital"
+          style="width:96px;font-size:.9375rem;font-weight:700;border:none;background:transparent;color:var(--accent);outline:none;padding:0"
+          title="Change total capital — all targets and amounts rescale automatically">
+      </div>
+      ${ddBadge}
+    </div>
+    <div class="hdr-right">
+      ${(()=>{
+        if (!S.month0Complete) return '';
+        if (!S.lastExportedAt) return `<span style="font-size:.6875rem;color:var(--danger);font-weight:600">⚠ Never exported</span>`;
+        const days = Math.floor((Date.now() - S.lastExportedAt) / 86400000);
+        if (days > 30) return `<span style="font-size:.6875rem;color:var(--warn);font-weight:600" title="Last export ${days} days ago — export regularly to protect your data">⚠ Export overdue (${days}d)</span>`;
+        return `<span style="font-size:.6875rem;color:var(--muted)" title="Last exported ${days} day${days!==1?'s':''} ago">Exported ${days===0?'today':`${days}d ago`}</span>`;
+      })()}
+      <button class="btn sm" data-action="dl-status">⬇ Export</button>
+      <button class="btn sm" onclick="importJSON()">⬆ Import</button>
+      <button class="btn sm" onclick="window.print()">⎙ Print</button>
+    </div>
+  `);
+}
+
+// ── Banners ───────────────────────────────────────────────────────
+function renderBanners() {
+  let html = '';
+
+  // ── Setup banner — visible until all 4 setup steps are confirmed ──
+  const step1Done = !!(S.startLevel || (S.manualDrawdown !== '' && S.manualDrawdown != null));
+  const step2Done = !!S.startDate;
+  const step3Done = !!S.month0Complete;
+  const step4Done = !!S.monitorTaskUpdated;
+  const startLvlForClipboard = parseFloat(S.startLevel) > 0 ? S.startLevel : '';
+  if (!step1Done || !step3Done || (step3Done && !step4Done)) {
+    const steps = [
+      { done: step1Done, text: 'Enter the S&P 500 level on the day you start (in <strong>Price Tracker</strong> below) — this sets your drawdown reference point' },
+      { done: step2Done, text: null, input: `<span style="font-size:.8125rem">Set your plan start date:</span> <input type="date" value="${S.startDate||''}" data-action="set-startdate" style="padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:.8125rem;margin-left:6px">` },
+      { done: step3Done, text: 'Execute your initial lump-sum investment in your brokerage, then click <strong>Mark done</strong> in the action box below' },
+      { done: step4Done, text: null, input: step1Done
+          ? `<div style="display:flex;flex-direction:column;gap:6px">
+               <span style="font-size:.8125rem">Update your <strong>daily monitoring task</strong> with your start level — this activates your automated email alerts.</span>
+               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                 <code style="background:#f3f4f6;border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:.8125rem">${startLvlForClipboard || '(set Day 1 level first)'}</code>
+                 ${startLvlForClipboard ? `<button class="btn sm" data-action="copy-start-level">Copy level</button>` : ''}
+                 <span style="font-size:.75rem;color:var(--muted)">Open Scheduled sidebar → portfolio-sp500-monitor → replace SET_THIS_ONCE with this value</span>
+               </div>
+               ${step3Done ? `<button class="btn primary sm" data-action="mark-monitor-done" style="align-self:flex-start">I've updated the monitoring task ✓</button>` : `<span style="font-size:.75rem;color:var(--muted)">Do this after completing step 3.</span>`}
+             </div>`
+          : `<span style="font-size:.8125rem;color:var(--muted)">Update your daily monitoring task with your Day 1 S&P 500 level (complete step 1 first)</span>` }
+    ];
+    const stepsHtml = steps.map((s, i) => `
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-top:8px">
+        <span style="width:20px;height:20px;border-radius:50%;flex-shrink:0;background:${s.done?'var(--success)':'#d1d5db'};color:${s.done?'#fff':'#6b7280'};font-size:.625rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px">${s.done?'✓':i+1}</span>
+        <div style="flex:1;font-size:.8125rem;${s.done&&!s.input?'text-decoration:line-through;color:var(--muted)':''}">${s.input ? s.input : s.text}</div>
+      </div>`).join('');
+    html += `<div class="banner info" style="flex-direction:column;align-items:flex-start">
+      <div style="display:flex;align-items:center;gap:8px;width:100%">
+        <span style="font-size:1.1rem">👋</span>
+        <strong>Launch checklist — ${[step1Done,step2Done,step3Done,step4Done].filter(Boolean).length} of 4 steps complete</strong>
+      </div>
+      ${stepsHtml}
+    </div>`;
+  }
+
+  // ── Export overdue reminder (post-launch) ──
+  if (S.month0Complete) {
+    const daysSinceExport = S.lastExportedAt ? Math.floor((Date.now()-S.lastExportedAt)/86400000) : Infinity;
+    if (daysSinceExport > 30) {
+      html += `<div class="banner warn"><span class="banner-icon">💾</span><div class="banner-body" style="flex:1">
+        <strong>${daysSinceExport === Infinity ? 'You have never exported your state' : `No export in ${daysSinceExport} days`}</strong>
+        <p>Your progress is stored in this browser only. Export a backup so you can recover it if you switch devices or clear your cache.</p>
+      </div>
+      <button class="btn sm" data-action="dl-status" style="flex-shrink:0;margin-left:8px">Export now</button>
+      </div>`;
+    }
+  }
+
+  // ── Price staleness warning (post-launch) ──
+  if (S.month0Complete) {
+    const daysSincePrice = S.lastPriceUpdatedAt
+      ? Math.floor((Date.now() - S.lastPriceUpdatedAt) / 86400000)
+      : Infinity;
+    if (daysSincePrice > 7) {
+      html += `<div class="banner warn"><span class="banner-icon">📈</span><div class="banner-body" style="flex:1">
+        <strong>${daysSincePrice === Infinity ? 'S&amp;P 500 level not yet entered' : `S&amp;P 500 level last updated ${daysSincePrice} days ago`}</strong>
+        <p>Update the current S&amp;P 500 level in the Price Tracker — a ${Math.abs(C.triggers[0]?.threshold||10)}% market drop could go undetected until you do.</p>
+      </div></div>`;
+    }
+  }
+
+  // ── Fix #2: Action banner — always visible, highest priority action ──
+  const ab = buildActionBanner();
+  const bannerBg   = ab.cls==='crash' ? '#fef2f2' : ab.cls==='warn' ? '#fffbeb' : '#eff6ff';
+  const bannerBdr  = ab.cls==='crash' ? 'var(--danger)' : ab.cls==='warn' ? '#fbbf24' : '#93c5fd';
+  const iconColor  = ab.cls==='crash' ? 'var(--danger)' : ab.cls==='warn' ? 'var(--warn)' : 'var(--accent)';
+  html += `<div class="banner" style="background:${bannerBg};border-color:${bannerBdr};align-items:center">
+    <span class="banner-icon" style="color:${iconColor};font-size:1.1rem;font-weight:700;min-width:20px;text-align:center">${ab.icon}</span>
+    <div class="banner-body" style="flex:1">
+      <strong>${ab.title}</strong>
+      <p>${ab.text}</p>
+    </div>
+    ${ab.btn ? `<div style="flex-shrink:0;margin-left:8px">${ab.btn}</div>` : ''}
+  </div>`;
+
+  // ── Fix #4 (deep crash): plain-English explanation ──
+  if (isDeepCrash()) {
+    html += `<div class="banner crash"><span class="banner-icon">⚡</span><div class="banner-body">
+      <strong>What "market down 30%" means for your plan</strong>
+      <p>Stop your monthly buys for IBCI (inflation bonds), ERNX (short bonds), CMOE (commodities), and SGLD (gold). Redirect all remaining undeployed capital to VWCE and XDW0 — these are the most discounted assets in a severe crash, and your plan is designed to concentrate equity exposure precisely at moments like this.</p>
+    </div></div>`;
+  }
+
+  // ── Fix #7: Month lag warning ──
+  const expectedMonth = getExpectedPlanMonth();
+  const recordedMonth = S.currentMonth || 0;
+  if (expectedMonth !== null && step3Done && expectedMonth > recordedMonth) {
+    html += `<div class="banner warn"><span class="banner-icon">📅</span><div class="banner-body" style="flex:1">
+      <strong>Plan month counter may need updating</strong>
+      <p>Your start date suggests you're in plan month ${expectedMonth}, but the counter shows month ${recordedMonth}. Update it if that's right.</p>
+    </div>
+    <button class="btn sm" data-action="set-month-auto" data-month="${expectedMonth}" style="flex-shrink:0;margin-left:8px">Set to Month ${expectedMonth}</button>
+    </div>`;
+  }
+
+  setHtml('banners', html);
+}
+
+// ── Summary Cards ─────────────────────────────────────────────────
+function renderSummaryCards() {
+  const invested = getTotalInvested();
+  const staging  = getStagingRemaining();
+  const T        = C.totalCapital;
+  const dd       = getDrawdownPct();
+  const invPct   = T > 0 ? (invested/T*100) : 0;
+  const ddSet    = (S.manualDrawdown!==''&&S.manualDrawdown!=null) || (parseFloat(S.startLevel)>0 && parseFloat(S.currentLevel)>0);
+  const ddClass  = dd <= -30 ? 'dc' : dd <= -10 ? 'wc' : '';
+  const athDD    = getATHDrawdownPct();
+
+  const showMV  = hasAnyMV();
+  const totalMV = showMV ? getTotalMV() : null;
+  const pnl     = showMV ? getPnL() : null;
+  const pnlPct  = (showMV && invested > 0) ? pnl / invested * 100 : null;
+  setHtml('summary-cards', `
+    <div class="cards">
+      <div class="card">
+        <div class="card-lbl">Total to invest</div>
+        <div class="card-val">${fmt(T)}</div>
+        <div class="card-sub">Your 18-month deployment target</div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Invested so far${showMV ? ' (at cost)' : ''}</div>
+        <div class="card-val">${fmt(invested)}</div>
+        <div class="pbar"><div class="pbar-fill" style="width:${Math.min(100,invPct)}%"></div></div>
+        <div class="card-sub">${fmtP(invPct)} of total · at purchase price</div>
+      </div>
+      ${showMV ? `
+      <div class="card ${pnl>=0?'ac':'dc'}">
+        <div class="card-lbl">Portfolio market value</div>
+        <div class="card-val" style="color:${pnl>=0?'var(--success)':'var(--danger)'}">${fmt(totalMV)}</div>
+        <div class="card-sub">${pnl>=0?'▲':'▼'} ${fmt(Math.abs(pnl))} (${pnlPct!=null?(pnlPct>=0?'+':'')+pnlPct.toFixed(1)+'%':'—'}) unrealised P&amp;L</div>
+      </div>` : ''}
+      <div class="card ${staging < 0 ? 'dc' : ''}">
+        <div class="card-lbl">Still to invest</div>
+        <div class="card-val" style="color:${staging<0?'var(--danger)':staging>0?'var(--staging)':'var(--success)'}">${staging < 0 ? '⚠ ' : ''}${fmt(Math.abs(staging))}</div>
+        <div class="card-sub">${staging < 0 ? `Holdings exceed total capital by ${fmt(Math.abs(staging))} — check your holdings` : `${fmtP(T>0?staging/T*100:0)} of total · must be deployed by Month 18`}</div>
+      </div>
+      <div class="card ${ddClass}">
+        <div class="card-lbl">Market drop from your start</div>
+        <div class="card-val" style="color:${dd<=-30?'var(--danger)':dd<=-10?'var(--warn)':'inherit'}">${ddSet ? fmtP(dd) : '—'}</div>
+        <div class="card-sub">${dd<=-30?'⚡ Crash mode: buy VWCE/XDW0 only':dd<=-10?'⚠ Trigger zone':ddSet?'No trigger active yet':'Set S&P 500 levels in tracker below'}</div>
+        ${athDD !== null ? `<div style="font-size:.6875rem;color:var(--muted);margin-top:4px;border-top:1px solid var(--border);padding-top:4px">From all-time high: <strong>${fmtP(athDD)}</strong></div>` : ''}
+      </div>
+    </div>
+  `);
+}
+
+// ── Next Action Checklist ─────────────────────────────────────────
+// Fix #5: all jargon replaced with plain language; action buttons added inline
+function renderChecklist() {
+  const dd      = getDrawdownPct();
+  const staging = getStagingRemaining();
+  const m       = S.currentMonth || 0;
+  const mLeft   = Math.max(0, 18 - m);
+  // items: { cls, text, btn? }
+  const items   = [];
+
+  // Fired triggers (highest urgency)
+  C.triggers.forEach(t => {
+    if (getTriggerStatus(t) === 'fired') {
+      items.push({ cls:'urg',
+        text: `Market has dropped ${Math.abs(t.threshold)}% from your start. Deploy ${fmt(t.total)}: ${fmt(t.VWCE)} into VWCE + ${fmt(t.XDW0)} into XDW0. This is a planned opportunistic buy.`,
+        btn:  `<button class="btn danger sm" data-action="execute-trigger" data-threshold="${t.threshold}" style="margin-top:6px">Mark executed ✓</button>` });
+    }
+  });
+
+  // Past deadline
+  if (m > 18 && staging > 1) {
+    items.push({ cls:'urg', text: `Past your 18-month investment deadline. ${fmt(staging)} is still undeployed. Invest it now across your base target allocations.` });
+  }
+
+  // Initial investment not made
+  if (!S.month0Complete) {
+    const b = C.month0Buys;
+    items.push({ cls:'act',
+      text: `Initial investment not yet made. Buy: ${fmt(b.VWCE)} VWCE · ${fmt(b.XDW0)} XDW0 · ${fmt(b.IBCI)} IBCI · ${fmt(b.ERNX)} ERNX · ${fmt(b.Cash)} Cash · ${fmt(b.CMOE)} CMOE · ${fmt(b.SGLD)} SGLD`,
+      btn:  `<button class="btn primary sm" data-action="mark-month0" style="margin-top:6px">Mark done ✓</button>` });
+  }
+
+  // Monthly buys overdue — show only the oldest, with count if multiple
+  const overdueMonths = [];
+  for (let i = 1; i <= m && i <= 18; i++) {
+    if (!S.dcaCompleted[String(i)]) overdueMonths.push(i);
+  }
+  if (overdueMonths.length > 0) {
+    const first = overdueMonths[0];
+    const extra = overdueMonths.length - 1;
+    const d = C.monthlyDCA;
+    // Show DCA timing hint if set
+    let timingHint = '';
+    if (S.dcaDay && S.startDate) {
+      const start = new Date(S.startDate);
+      const buyDate = new Date(start.getFullYear(), start.getMonth() + first, Math.min(parseInt(S.dcaDay),28));
+      const daysUntil = Math.round((buyDate - new Date()) / 86400000);
+      timingHint = daysUntil >= 0 ? ` (your scheduled buy day: ${buyDate.toLocaleDateString('en-IE',{day:'numeric',month:'short'})})` : '';
+    }
+    items.push({ cls:'act',
+      text: `Month ${first} monthly buy due${timingHint}${extra > 0 ? ` <strong>(+${extra} more month${extra>1?'s':''} also overdue)</strong>` : ''}. Buy: ${fmt(d.VWCE)} VWCE · ${fmt(d.XDW0)} XDW0 · ${fmt(d.IBCI)} IBCI · ${fmt(d.ERNX)} ERNX · ${fmt(d.CMOE)} CMOE · ${fmt(d.SGLD)} SGLD`,
+      btn:  `<button class="btn primary sm" data-action="mark-dca" data-month="${first}" style="margin-top:6px">Mark Month ${first} done ✓</button>` });
+  }
+
+  // Deep crash active
+  if (isDeepCrash()) {
+    items.push({ cls:'urg', text: `Market is down 30%+. Switch strategy: stop monthly buys for IBCI, ERNX, CMOE, SGLD. Redirect all remaining undeployed money to VWCE and XDW0 instead.` });
+  }
+
+  // Mild drawdown — informational
+  if (dd < 0 && dd > -10) {
+    items.push({ cls:'inf', text: `Market is down ${fmtP(Math.abs(dd))} from your start — not enough to trigger anything yet. Your first opportunistic buy fires at −10% (${fmt(C.triggers[0]?.total)}).` });
+  }
+
+  // Month 17–18: completion reserve deployment guidance
+  if (m >= 17 && m <= 18 && staging > 1) {
+    const b = C.baseTargets;
+    const gapRows = ASSETS.filter(a=>a!=='Cash').map(a=>{
+      const gap = b[a] - (S.holdings[a]||0);
+      return gap > 50 ? `${a}: ${fmt(gap)}` : null;
+    }).filter(Boolean).join(' · ');
+    items.push({ cls:'act',
+      text: `Month ${m} — deploy your ${fmt(C.completionReserve)} completion reserve to top up base targets by Month 18.${gapRows ? ` Remaining gaps: ${gapRows}.` : ' All base targets met.'}` });
+  } else if (m >= 13 && m < 17 && staging > 1 && mLeft > 0) {
+    items.push({ cls:'act', text: `Month 18 approaching — ${mLeft} months left to fully invest. You have ${fmt(staging)} remaining. Aim to deploy ~${fmt(staging/mLeft)}/month on top of your regular buy.` });
+  }
+
+  // On track — no action needed
+  const nextT = C.triggers.find(t => getTriggerStatus(t) === 'wait');
+  if (nextT && dd >= -5 && S.month0Complete) {
+    items.push({ cls:'inf', text: `No market drop to act on. Continue your monthly buys. Next opportunistic buy triggers if the market drops ${Math.abs(nextT.threshold)}% from your start → deploy ${fmt(nextT.total)}.` });
+  }
+
+  const html = items.map((item, i) => `
+    <div class="cl-item ${item.cls}">
+      <div class="cl-num ${item.cls}">${i+1}</div>
+      <div class="cl-txt">${item.text}${item.btn ? item.btn : ''}</div>
+    </div>`).join('');
+  setHtml('checklist', `<div class="cl">${html || '<p style="color:var(--muted);font-size:.875rem">All caught up.</p>'}</div>`);
+}
+
+// ── Trigger Ladder ────────────────────────────────────────────────
+function renderTriggerLadder() {
+  const dd = getDrawdownPct();
+  const ddSet = (S.manualDrawdown!==''&&S.manualDrawdown!=null)||(parseFloat(S.startLevel)>0&&parseFloat(S.currentLevel)>0);
+
+  const rows = C.triggers.map(t=>{
+    const status = getTriggerStatus(t);
+    const exec   = S.triggersExecuted[String(t.threshold)];
+    const distPct = ddSet ? (t.threshold - dd) : null;
+    return `
+      <div class="trig ${status}">
+        <div class="trig-dot ${status}">${status==='done'?'✓':status==='fired'?'!':'○'}</div>
+        <div class="trig-info">
+          <div>
+            <span class="trig-pct">${t.threshold}%</span>
+            <span class="trig-lbl ${status}">${status==='wait'?'WAITING':status==='fired'?'FIRED — ACT NOW':'EXECUTED'}</span>
+          </div>
+          <div class="trig-det">
+            Buy ${fmt(t.total)} → ${fmt(t.VWCE)} VWCE + ${fmt(t.XDW0)} XDW0
+            ${exec ? `<span style="margin-left:8px;color:var(--success)">✓ done ${exec.date}</span>` : ''}
+            ${distPct !== null && status==='wait' ? `<span style="margin-left:8px;color:${distPct<=5?'var(--danger)':distPct<=15?'var(--warn)':'var(--muted)'};font-weight:${distPct<=10?'600':'400'}">· ${fmtP(distPct)} away from firing</span>` : ''}
+          </div>
+          ${t.pivot ? `<div class="trig-pivot">⚡ At this level: stop IBCI/ERNX/CMOE/SGLD buys — concentrate remaining capital into VWCE/XDW0</div>` : ''}
+        </div>
+        ${status==='fired' ? `<button class="btn primary sm" data-action="execute-trigger" data-threshold="${t.threshold}">Execute</button>` : ''}
+      </div>`;
+  }).join('');
+
+  const athDD   = getATHDrawdownPct();
+  const athNote = athDD !== null ? ` &nbsp;|&nbsp; From ATH: <strong>${fmtP(athDD)}</strong>` : '';
+  const ddInfo  = ddSet
+    ? `From plan start: <strong style="color:${dd<=-30?'var(--danger)':dd<=-10?'var(--warn)':'inherit'}">${fmtP(dd)}</strong>${athNote}`
+    : `<span style="color:var(--muted)">Drawdown not set — enter S&amp;P 500 levels in the Price Tracker above</span>`;
+  setHtml('trigger-ladder', `<div style="font-size:.8125rem;margin-bottom:8px">${ddInfo}</div><div class="ladder">${rows}</div>`);
+}
+
+// ── Allocation Chart (Chart.js) ───────────────────────────────────
+function renderAllocationChart() {
+  const canvas = document.getElementById('alloc-canvas');
+  if (!canvas) return;
+  if (allocationChart) { allocationChart.destroy(); allocationChart = null; }
+
+  const invested = getTotalInvested();
+  const staging  = getStagingRemaining();
+  const vb = S.viewBy || 'asset';
+
+  let labels, currentData, targetData, datasets;
+
+  if (vb === 'category') {
+    labels = ['Global Equities','Energy Equities','Defensive','Real Assets','Staging Reserve'];
+    const catKeys = {
+      'Global Equities': ['VWCE'],
+      'Energy Equities': ['XDW0'],
+      'Defensive':       ['IBCI','ERNX','Cash'],
+      'Real Assets':     ['CMOE','SGLD'],
+      'Staging Reserve': []
+    };
+    const catColors = {'Global Equities':'#2563eb','Energy Equities':'#0ea5e9','Defensive':'#059669','Real Assets':'#d97706','Staging Reserve':'#8b5cf6'};
+    const currentVals = labels.map(l => l==='Staging Reserve' ? staging : catKeys[l].reduce((s,a)=>s+(S.holdings[a]||0),0));
+    const targetVals  = labels.map(l => l==='Staging Reserve' ? 0 : catKeys[l].reduce((s,a)=>s+(C.baseTargets[a]||0),0));
+    datasets = [
+      {label:'Current',     data:currentVals, backgroundColor:labels.map(l=>catColors[l]+'cc')},
+      {label:'Base Target', data:targetVals,  backgroundColor:labels.map(l=>catColors[l]+'66')}
+    ];
+  } else {
+    labels = ASSETS;
+    const currentVals = ASSETS.map(a => S.holdings[a]||0);
+    const targetVals  = ASSETS.map(a => C.baseTargets[a]);
+    currentVals.push(staging); labels = [...ASSETS, 'Staging'];
+    targetVals.push(0);
+    const colors = [...ASSETS.map(a=>ASSET_COLORS[a]), '#8b5cf6'];
+    datasets = [
+      {label:'Current',     data:currentVals, backgroundColor:colors.map(c=>c+'cc')},
+      {label:'Base Target', data:targetVals,  backgroundColor:colors.map(c=>c+'55')}
+    ];
+  }
+
+  allocationChart = new Chart(canvas, {
+    type: 'bar',
+    data: {labels, datasets},
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {labels:{font:{size:11},boxWidth:12}},
+        tooltip: {callbacks:{label: ctx=>`${ctx.dataset.label}: €${Math.round(ctx.raw).toLocaleString('en-IE')}`}}
+      },
+      scales: {
+        x: {stacked:false, ticks:{callback:v=>'€'+Math.round(v/1000)+'k',font:{size:10}}, grid:{color:'#f0f0ee'}},
+        y: {ticks:{font:{size:11}}}
+      }
+    }
+  });
+}
+
+// ── Timeline ──────────────────────────────────────────────────────
+function renderTimeline() {
+  const m = S.currentMonth || 0;
+  const staging = getStagingRemaining();
+  let html = '<div class="tl">';
+  for (let i=0; i<=18; i++) {
+    if (i>0) {
+      const prevDone = i===1 ? S.month0Complete : !!S.dcaCompleted[String(i-1)];
+      html += `<div class="tl-conn ${prevDone?'done':''}"></div>`;
+    }
+    const done = i===0 ? S.month0Complete : !!S.dcaCompleted[String(i)];
+    const cur  = i===m;
+    const cls  = done?'done':cur?'cur':'';
+    const canClick = i>0 && i<=18 && !done && i<=m;
+    const action = canClick ? `data-action="mark-dca" data-month="${i}"` : '';
+    const amt = i===0?fmt(C.totalCapital*0.5):i===18?'':fmt(Object.values(C.monthlyDCA).reduce((a,b)=>a+b,0));
+    html += `<div class="tl-month">
+      <div class="tl-dot ${cls}" ${action} title="Month ${i}${i===18?' — DEADLINE':''}${amt?' · '+amt:''}"></div>
+      <div class="tl-lbl">M${i}</div>
+      ${i===18?`<div class="tl-amt" style="color:var(--danger)">Deadline</div>`:amt?`<div class="tl-amt">${i===0?'€150k':'~€3k'}</div>`:''}
+    </div>`;
+  }
+  html += '</div>';
+
+  const pct = Math.min(100, m/18*100);
+  html += `<div class="pbar" style="margin-top:8px;height:10px"><div class="pbar-fill" style="width:${pct}%"></div></div>`;
+  html += `<div style="font-size:.75rem;color:var(--muted);margin-top:4px">Month ${m} of 18 · ${Math.round(pct)}% of deployment window elapsed</div>`;
+
+  if (m > 18 && staging > 1) {
+    html += `<div class="banner warn" style="margin-top:10px;margin-bottom:0"><span class="banner-icon">⚠</span><div class="banner-body"><strong>Plan breach: temporary staging reserve should be zero by Month 18.</strong></div></div>`;
+  }
+  setHtml('timeline', html);
+}
+
+// ── Capital Flow ──────────────────────────────────────────────────
+function renderCapitalFlow() {
+  const T = C.totalCapital;
+  const dcaUsed = Object.keys(S.dcaCompleted||{}).filter(k=>S.dcaCompleted[k]).length * Object.values(C.monthlyDCA).reduce((a,b)=>a+b,0);
+  const trigUsed = Object.keys(S.triggersExecuted||{}).reduce((s,k)=>{
+    const t = C.triggers.find(x=>String(x.threshold)===k); return s+(t?t.total:0);},0);
+
+  setHtml('capital-flow', `
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div><span class="flow-node fn-total">${fmt(T)} Total Capital</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span style="color:var(--muted)">└─</span>
+        <span class="flow-node fn-inv">${fmt(T*0.5)} Month 0 Invested</span>
+        <span style="color:var(--muted)">+</span>
+        <span class="flow-node fn-stage">${fmt(T*0.5)} Staging Reserve</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;padding-left:20px">
+        <div>
+          <div class="flow-node fn-dca">${fmt(C.dcaTotal)} Scheduled DCA</div>
+          <div style="font-size:.6875rem;color:var(--muted);margin-top:2px">~€3k/month × 18 · Used: ${fmt(dcaUsed)}</div>
+        </div>
+        <div>
+          <div class="flow-node fn-dd">${fmt(C.drawdownReserve)} Drawdown Reserve</div>
+          <div style="font-size:.6875rem;color:var(--muted);margin-top:2px">Deploy at −10% to −48% · Used: ${fmt(trigUsed)}</div>
+        </div>
+        <div>
+          <div class="flow-node fn-res">${fmt(C.completionReserve)} Completion Reserve</div>
+          <div style="font-size:.6875rem;color:var(--muted);margin-top:2px">Complete base target by M18</div>
+        </div>
+      </div>
+      <div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:6px;padding:8px 10px;font-size:.75rem">
+        <strong>⚠ Key distinction:</strong> The permanent Cash position (${fmt(C.baseTargets.Cash)}) is part of your <em>final portfolio target</em> — it is not temporary staging reserve. Once deployed at Month 0, it is invested capital, not available for redeployment.
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.8125rem">
+        <span><strong>Staging remaining:</strong> ${fmt(getStagingRemaining())} (${fmtP(T>0?getStagingRemaining()/T*100:0)})</span>
+        <span><strong>Invested:</strong> ${fmt(getTotalInvested())} (${fmtP(T>0?getTotalInvested()/T*100:0)})</span>
+      </div>
+    </div>
+  `);
+}
+
+// ── Holdings Table ────────────────────────────────────────────────
+function renderHoldings() {
+  const deep   = isDeepCrash();
+  const showMV = hasAnyMV();
+  const rows = ASSETS.map(a=>{
+    const held = S.holdings[a]||0;
+    const tgt  = C.baseTargets[a];
+    const gap  = tgt - held;
+    const prog = tgt > 0 ? Math.min(1, held/tgt) : 0;
+    const isEq = a==='VWCE'||a==='XDW0';
+    const over = held > tgt && !(deep && isEq);
+    const mv   = showMV ? getMV(a) : null;
+    const pnl  = showMV ? mv - held : null;
+    const pnlPct = (showMV && held > 0) ? pnl/held*100 : null;
+    return `<tr>
+      <td><span style="display:inline-flex;align-items:center;gap:5px">
+        <span style="width:9px;height:9px;border-radius:2px;background:${ASSET_COLORS[a]};display:inline-block"></span>
+        <strong>${a}</strong></span></td>
+      <td style="font-size:.75rem;color:var(--muted)">${ASSET_CAT[a]}</td>
+      <td class="num">${fmt(held)}</td>
+      ${showMV ? `
+      <td class="num">${fmt(mv)}</td>
+      <td class="num" style="color:${pnl>=0?'var(--success)':'var(--danger);font-weight:600'}">${pnl>=0?'+':''}${fmt(pnl)}<br><span style="font-size:.625rem">${pnlPct!=null?(pnlPct>=0?'+':'')+pnlPct.toFixed(1)+'%':'—'}</span></td>
+      ` : ''}
+      <td class="num">${fmt(tgt)}</td>
+      <td class="num" style="color:${over?'var(--danger)':gap===0?'var(--success)':'inherit'}">${gap<0&&!over?`⚠ ${fmt(Math.abs(gap))} over`:gap===0?'✓ Full':fmt(gap)}</td>
+      <td class="num">${fmtP(tgt>0?held/tgt*100:0)}%</td>
+      <td style="min-width:80px">
+        <div class="gap-bar"><div class="gap-fill" style="width:${Math.min(100,prog*100)}%;background:${over?'var(--danger)':ASSET_COLORS[a]}"></div></div>
+      </td>
+    </tr>`;
+  }).join('');
+  const inv     = getTotalInvested();
+  const totalMV = showMV ? getTotalMV() : null;
+  const totalPnL = showMV ? getPnL() : null;
+  setHtml('holdings-tbl', `<div style="overflow-x:auto"><table class="tbl">
+    <thead><tr>
+      <th>Asset</th><th>Category</th><th class="num">Cost</th>
+      ${showMV ? '<th class="num">Mkt Value</th><th class="num">P&amp;L</th>' : ''}
+      <th class="num">Target</th><th class="num">Gap</th><th class="num">% Done</th><th>Progress</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr>
+      <td colspan="2">Total</td>
+      <td class="num">${fmt(inv)}</td>
+      ${showMV ? `
+      <td class="num" style="color:${totalPnL>=0?'var(--success)':'var(--danger)'}">${fmt(totalMV)}</td>
+      <td class="num" style="color:${totalPnL>=0?'var(--success)':'var(--danger)'}">${totalPnL>=0?'+':''}${fmt(totalPnL)}</td>` : ''}
+      <td class="num">${fmt(C.totalCapital)}</td>
+      <td class="num">${fmt(getStagingRemaining())}</td>
+      <td class="num">${fmtP(C.totalCapital>0?inv/C.totalCapital*100:0)}%</td>
+      <td></td>
+    </tr></tfoot>
+  </table></div>
+  ${!showMV ? `<div style="font-size:.75rem;color:var(--muted);margin-top:8px">
+    💡 Add market values in <strong>Settings → Market Values</strong> to track unrealised P&amp;L here.
+  </div>` : ''}`);
+}
+
+// ── Scenario Simulator ────────────────────────────────────────────
+function renderScenarios() {
+  const active = S.activeScenario || 'none';
+  const sc = SCENARIOS.find(s=>s.id===active);
+  const res = runScenario(sc.dd);
+
+  const cards = SCENARIOS.map(s=>`
+    <div class="sc-card ${active===s.id?'on':''}" data-action="set-scenario" data-scenario="${s.id}">
+      <h3>${s.label}</h3><p>${s.desc}</p>
+    </div>`).join('');
+
+  const trigRows = res.fired.map(t=>`<div style="font-size:.8125rem;padding:3px 0;border-bottom:1px solid var(--border)">${t.threshold}% → ${fmt(t.total)} (${fmt(t.VWCE)} VWCE + ${fmt(t.XDW0)} XDW0)</div>`).join('');
+
+  setHtml('scenarios', `
+    <div class="sc-grid">${cards}</div>
+    <div class="sc-result">
+      <h3>${sc.label} — Outcome</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px">
+        <div><div style="font-size:.625rem;font-weight:600;text-transform:uppercase;color:var(--muted);margin-bottom:2px">Triggers Fire</div><div style="font-weight:700">${res.fired.length} of ${C.triggers.length}</div></div>
+        <div><div style="font-size:.625rem;font-weight:600;text-transform:uppercase;color:var(--muted);margin-bottom:2px">Trigger Capital</div><div style="font-weight:700">${fmt(res.tCap)}</div></div>
+        <div><div style="font-size:.625rem;font-weight:600;text-transform:uppercase;color:var(--muted);margin-bottom:2px">Deep-Crash Pivot</div><div style="font-weight:700;color:${res.deep?'var(--danger)':'var(--success)'}">${res.deep?'YES':'No'}</div></div>
+        <div><div style="font-size:.625rem;font-weight:600;text-transform:uppercase;color:var(--muted);margin-bottom:2px">Staging at M18</div><div style="font-weight:700">${fmt(res.stLeft)}</div></div>
+      </div>
+      ${res.fired.length>0?`<div style="margin-bottom:8px"><div style="font-size:.75rem;font-weight:600;margin-bottom:4px">Triggers fired:</div>${trigRows}</div>`:''}
+      ${res.deep?`<div class="banner crash" style="margin-bottom:8px"><span class="banner-icon">⚡</span><div class="banner-body"><strong>Deep-Crash Pivot Active</strong><p>Pause IBCI/ERNX/CMOE/SGLD DCA. Redirect remaining capital to VWCE/XDW0. Final allocation intentionally equity-heavy — this is by design.</p></div></div>`:''}
+      <div style="font-size:.875rem;line-height:1.6;color:var(--muted);background:#fff;padding:10px;border-radius:6px;border:1px solid var(--border)">${res.desc}</div>
+    </div>
+  `);
+}
+
+// ── Warnings ──────────────────────────────────────────────────────
+function renderWarnings() {
+  const w = calcWarnings();
+  const html = w.length===0
+    ? '<div class="warn-item ok">✓ No active guardrail warnings.</div>'
+    : w.map(x=>`<div class="warn-item hot">⚠ ${x}</div>`).join('');
+  setHtml('warnings', `<div class="warn-list">${html}</div>`);
+}
+
+// ── Transaction Log ───────────────────────────────────────────────
+function renderTransactions() {
+  const txns = (S.transactions||[]).slice().reverse();
+  if (!txns.length) { setHtml('tx-log','<p style="color:var(--muted);font-size:.875rem">No transactions yet.</p>'); return; }
+  const rows = txns.map(t=>`<tr>
+    <td style="font-size:.75rem;color:var(--muted)">${t.date}</td>
+    <td><span class="tag ${t.type==='trigger'?'eq':t.type==='dca'?'def':'m0'}">${t.type}</span></td>
+    <td>${t.desc}</td>
+    <td class="num">${fmt(t.amount)}</td>
+  </tr>`).join('');
+  setHtml('tx-log',`<div style="overflow-x:auto"><table class="tbl">
+    <thead><tr><th>Date</th><th>Type</th><th>Description</th><th class="num">Amount</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>
+  <button class="btn sm" style="margin-top:8px" data-action="clear-txns">Clear log</button>`);
+}
+
+// ── Settings ──────────────────────────────────────────────────────
+function renderSettings() {
+  const holdRows = ASSETS.map(a=>`
+    <div class="inp-row" style="margin-bottom:4px">
+      <label style="width:80px">${a}</label>
+      <input type="number" step="100" min="0" value="${S.holdings[a]||0}" data-action="set-holding" data-asset="${a}">
+    </div>`).join('');
+
+  setHtml('settings', `
+    <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:12px;margin-bottom:12px">
+      <div class="inp-row" style="margin-bottom:4px">
+        <label style="font-weight:700;color:var(--accent)">Total capital (€)</label>
+        <input type="number" step="1000" min="10000" value="${S.totalCapital||300000}" class="cap-inp" data-action="set-capital">
+      </div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:4px">
+        Changing this rescales every target, DCA amount, and trigger tranche proportionally. Already-marked holdings are not adjusted — only plan targets update.
+      </div>
+    </div>
+    <hr class="div">
+    <h3>Plan Progress</h3>
+    <div class="inp-row">
+      <label>Plan month (0 = not started, 1–18 = in progress)</label>
+      <input type="number" min="0" max="24" value="${S.currentMonth||0}" data-action="set-month">
+    </div>
+    <div class="inp-row">
+      <label>Plan start date</label>
+      <input type="date" value="${S.startDate||''}" data-action="set-startdate">
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">Used to auto-detect whether your plan month counter needs advancing.</div>
+    <div class="inp-row">
+      <label>Monthly buy day (1–28)</label>
+      <input type="number" min="1" max="28" value="${S.dcaDay||''}" data-action="set-dca-day" placeholder="e.g. 1 = 1st of each month">
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">Set this to your preferred day for monthly buys. Shown in the checklist to remind you when a buy is due.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      ${!S.month0Complete ? `<button class="btn primary sm" data-action="mark-month0">✓ Mark initial investment complete</button>` : '<span style="font-size:.8125rem;color:var(--success)">✓ Initial investment done</span>'}
+      ${(()=>{ const m=S.currentMonth||0; for(let i=1;i<=m&&i<=18;i++){ if(!S.dcaCompleted[String(i)]) return `<button class="btn primary sm" data-action="mark-dca" data-month="${i}">✓ Mark Month ${i} monthly buy complete</button>`; } return ''; })()}
+    </div>
+    <hr class="div">
+    <h3>Holdings (deployed capital at cost)</h3>
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px">Enter what you paid, not current market value. Use the Market Values section below for P&amp;L tracking.</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px">${holdRows}</div>
+    <hr class="div">
+    <h3>Market Values <span style="font-size:.75rem;font-weight:400;color:var(--muted)">(optional — for P&amp;L tracking)</span></h3>
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;line-height:1.5">
+      Enter the <strong>current market value</strong> of each position (what it's worth today, not what you paid).
+      Update each time you check the dashboard. Leave blank to show cost price only.
+      When filled in, a P&amp;L column appears in Holdings and a market value card appears in the summary.
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px">
+      ${ASSETS.map(a=>`
+      <div class="inp-row" style="margin-bottom:4px">
+        <label style="width:80px">${a}</label>
+        <input type="number" step="100" min="0" value="${S.marketValues&&S.marketValues[a]||''}"
+          data-action="set-marketvalue" data-asset="${a}" placeholder="€ today's value">
+      </div>`).join('')}
+    </div>
+    <hr class="div">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn danger sm" data-action="reset-state">Reset all state</button>
+      <button class="btn sm" onclick="recoverFromBackup()">Recover from auto-backup</button>
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);margin-top:6px">Auto-backup is saved automatically after every change once the plan is live. Use it if your main state becomes corrupted.</div>
+  `);
+}
+
+// ── Export ────────────────────────────────────────────────────────
+function renderExport() {
+  const data = {config:C, state:S, exportedAt:new Date().toISOString()};
+  setHtml('export-panel', `
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+      <button class="btn sm" data-action="dl-status">⬇ Download status JSON</button>
+      <button class="btn sm" data-action="dl-config">⬇ Download config JSON</button>
+      <button class="btn sm" onclick="window.print()">⎙ Print</button>
+    </div>
+    <div class="export-pre">${JSON.stringify(data,null,2).replace(/</g,'&lt;')}</div>
+  `);
+}
+
+// ── Notes ─────────────────────────────────────────────────────────
+function renderNotes() {
+  setHtml('notes-area', `<textarea class="notes" data-action="set-notes" placeholder="Add notes about decisions, market conditions, or execution details…">${S.notes||''}</textarea>`);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 10. VIEW TOGGLES & QUICK ACTIONS BAR
+// ══════════════════════════════════════════════════════════════════
+function renderTabBar() {
+  setHtml('tab-area', `
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+      <div class="tabs">
+        <button class="tab ${(S.activeView||'simple')==='simple'?'on':''}" data-action="set-view" data-view="simple">Simple View</button>
+        <button class="tab ${(S.activeView||'simple')==='detailed'?'on':''}" data-action="set-view" data-view="detailed">Detailed View</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <div class="tabs" style="margin-bottom:0">
+          <button class="tab ${(S.viewBy||'asset')==='asset'?'on':''}" data-action="set-viewby" data-viewby="asset">By Asset</button>
+          <button class="tab ${(S.viewBy||'asset')==='category'?'on':''}" data-action="set-viewby" data-viewby="category">By Category</button>
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 11. MASTER RENDER
+// ══════════════════════════════════════════════════════════════════
+// Fix #3 (trigger ladder before checklist) + Fix #4 (remove chart/timeline from simple)
+function renderSimpleView() {
+  // Determine "all clear" state
+  const dd         = getDrawdownPct();
+  const ddSet      = (S.manualDrawdown!==''&&S.manualDrawdown!=null)||(parseFloat(S.startLevel)>0&&parseFloat(S.currentLevel)>0);
+  const anyFired   = C.triggers.some(t => getTriggerStatus(t) === 'fired');
+  const m          = S.currentMonth || 0;
+  const overdueM   = Array.from({length:m},(_, i)=>i+1).filter(i=>i<=18&&!S.dcaCompleted[String(i)]);
+  const allClear   = S.month0Complete && !anyFired && overdueM.length===0 && ddSet && !isDeepCrash() && m<=18;
+
+  // Compute "all clear" card content
+  let allClearCard = '';
+  if (allClear) {
+    const nextT = C.triggers.find(t => getTriggerStatus(t) === 'wait');
+    const staging = getStagingRemaining();
+    const mLeft   = Math.max(0, 18 - m);
+    // Next DCA: compute target date from start date + next month
+    let nextDCANote = '';
+    if (S.dcaDay && S.startDate) {
+      const start = new Date(S.startDate);
+      const nextMonth = m + 1;
+      if (nextMonth <= 18) {
+        const buyDate = new Date(start.getFullYear(), start.getMonth() + nextMonth, Math.min(parseInt(S.dcaDay), 28));
+        const daysUntil = Math.round((buyDate - new Date()) / 86400000);
+        nextDCANote = daysUntil > 0 ? ` · Month ${nextMonth} buy due in ~${daysUntil} day${daysUntil!==1?'s':''}` : ` · Month ${nextMonth} buy due soon`;
+      }
+    } else if (m < 18) {
+      nextDCANote = ` · Month ${m+1} buy not yet done`;
+    }
+    const nextTNote = nextT
+      ? `Next trigger: market needs to drop ${fmtP(Math.abs(nextT.threshold - dd))} more (to ${nextT.threshold}%)`
+      : 'All triggers executed';
+    allClearCard = `
+      <div style="background:#f0fdf4;border:2px solid var(--success);border-radius:10px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px">
+        <span style="font-size:1.75rem;line-height:1">✓</span>
+        <div>
+          <div style="font-size:1rem;font-weight:700;color:var(--success);margin-bottom:4px">No action needed right now</div>
+          <div style="font-size:.8125rem;color:var(--text);margin-bottom:3px">
+            <strong>Market:</strong> ${fmtP(dd)} from your start (S&P ${parseFloat(S.startLevel)>0?parseFloat(S.startLevel).toLocaleString():''}  → ${parseFloat(S.currentLevel)>0?parseFloat(S.currentLevel).toLocaleString():''})<br>
+            <strong>${nextTNote}</strong>${nextDCANote}<br>
+            <strong>${fmt(staging)}</strong> still to deploy over ${mLeft} month${mLeft!==1?'s':''} · plan month ${m} of 18
+          </div>
+        </div>
+      </div>`;
+  }
+
+  setHtml('view-content', `
+    ${allClearCard}
+    <div class="sec"><h2>Price Tracker &amp; Drawdown</h2><div id="price-tracker"></div></div>
+    <div class="sec"><h2>Opportunistic Buy Triggers</h2><div id="trigger-ladder"></div></div>
+    <div class="sec"><h2>Full To-Do List</h2><div id="checklist"></div></div>
+  `);
+}
+
+function renderDetailedView() {
+  const statusContent = `
+    <div class="sec"><h2>Price Tracker &amp; Drawdown</h2><div id="price-tracker"></div></div>
+    <div class="sec"><h2>Opportunistic Buy Triggers</h2><div id="trigger-ladder"></div></div>
+    <div class="sec"><h2>Full To-Do List</h2><div id="checklist"></div></div>
+    <div class="sec"><h2>Guardrail Warnings</h2><div id="warnings"></div></div>`;
+
+  const planContent = `
+    <div class="sec"><h2>Capital Flow</h2><div id="capital-flow"></div></div>
+    <div class="sec">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+        <h2 style="margin:0">18-Month Timeline</h2>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-size:.8125rem;color:var(--muted)">Month:</span>
+          <input type="number" min="0" max="24" value="${S.currentMonth||0}" data-action="set-month" style="width:52px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;font-size:.875rem">
+        </div>
+      </div>
+      <div id="timeline"></div>
+    </div>
+    <div class="sec"><h2>Plan Audit — Number Verification</h2><div id="plan-audit"></div></div>
+    <div class="sec" style="background:#fffbeb;border-color:#fbbf24">
+      <h3>Plan Note: DCA Rounding</h3>
+      <p style="font-size:.8125rem;color:var(--muted);line-height:1.6">Monthly DCA assigns €333/month each to IBCI, CMOE, and SGLD. Three × €333 = €999/month, giving a true monthly total of ~€2,999 (not €3,000) and an 18-month total of ~€53,982 (not €54,000). The €18 shortfall is a rounding artefact absorbed into the completion reserve.</p>
+    </div>`;
+
+  const holdingsContent = `
+    <div class="sec">
+      <h2>Portfolio Allocation</h2>
+      <div class="chart-wrap"><canvas id="alloc-canvas"></canvas></div>
+      <div class="legend" id="alloc-legend"></div>
+    </div>
+    <div class="sec"><h2>Holdings vs Target</h2><div id="holdings-tbl"></div></div>
+    <div class="sec"><h2>Transaction Log</h2><div id="tx-log"></div></div>`;
+
+  const researchContent = `
+    <div class="sec"><h2>Scenario Simulator</h2><div id="scenarios"></div></div>
+    <div class="sec"><h2>Asset Guide</h2><div id="asset-guide"></div></div>`;
+
+  const settingsContent = `
+    <div class="two-col">
+      <div class="sec"><h2>Settings</h2><div id="settings"></div></div>
+      <div class="sec"><h2>Export / Import</h2><div id="export-panel"></div></div>
+    </div>
+    <div class="sec"><h2>Notes</h2><div id="notes-area"></div></div>`;
+
+  setHtml('view-content', `
+    ${detailGroup('status',   '📊', 'Status — Price, Triggers &amp; Actions', statusContent)}
+    ${detailGroup('plan',     '📐', 'Plan — Capital Flow, Timeline &amp; Audit', planContent)}
+    ${detailGroup('holdings', '📈', 'Holdings — Allocation, P&amp;L &amp; Transactions', holdingsContent)}
+    ${detailGroup('research', '🔬', 'Research — Scenarios &amp; Asset Guide', researchContent)}
+    ${detailGroup('settings', '⚙️', 'Settings, Export &amp; Notes', settingsContent)}
+  `);
+}
+
+function render() {
+  renderHeader();
+  renderBanners();
+  renderTabBar();
+  renderSummaryCards();
+
+  const view = S.activeView || 'simple';
+  if (view === 'simple') renderSimpleView();
+  else renderDetailedView();
+
+  // Populate sections (always rendered regardless of view)
+  renderChecklist();
+  renderTriggerLadder();
+  renderTimeline();
+
+  renderPriceTracker();
+
+  if (view === 'detailed') {
+    renderCapitalFlow();
+    renderScenarios();
+    renderHoldings();
+    renderWarnings();
+    renderTransactions();
+    renderSettings();
+    renderExport();
+    renderNotes();
+    renderPlanAudit();
+    renderAssetGuide();
+  }
+
+  // Chart only when canvas is in DOM (detailed view + holdings section not collapsed)
+  requestAnimationFrame(()=>{
+    if (view !== 'detailed' || !isSecCollapsed('holdings')) {
+      renderAllocationChart();
+      renderAllocLegend();
+    }
+  });
+}
+
+// ── Plan Audit ────────────────────────────────────────────────────
+function renderPlanAudit() {
+  const el = document.getElementById('plan-audit');
+  if (!el) return;
+  const T = C.totalCapital;
+  const r = (num, den) => `${num}/${den} × ${fmt(T)} = `;
+
+  // Capital stack
+  const m0Total   = Object.values(C.month0Buys).reduce((a,b)=>a+b,0);
+  const dcaMonth  = Object.values(C.monthlyDCA).reduce((a,b)=>a+b,0);
+  const dcaTotal  = C.dcaTotal;
+  const trigTotal = C.drawdownReserve;
+  const compRes   = C.completionReserve;
+  const stackSum  = m0Total + dcaTotal + trigTotal + compRes;
+  const stackOk   = Math.abs(stackSum - T) < 50;
+
+  // Target allocation check
+  const targetSum = Object.values(C.baseTargets).reduce((a,b)=>a+b,0);
+  const targetOk  = Math.abs(targetSum - T) < 50;
+
+  const row = (label, formula, val, note='') =>
+    `<tr><td style="padding:4px 10px 4px 0;color:var(--muted);font-size:.75rem;white-space:nowrap">${label}</td>
+      <td style="padding:4px 10px 4px 0;font-family:monospace;font-size:.6875rem;color:var(--muted)">${formula}</td>
+      <td style="padding:4px 0;font-weight:600;white-space:nowrap">${fmt(val)}</td>
+      <td style="padding:4px 0 4px 10px;font-size:.6875rem;color:var(--muted)">${note}</td></tr>`;
+
+  el.innerHTML = `
+    <p style="font-size:.8125rem;color:var(--muted);margin-bottom:12px;line-height:1.6">
+      Every number in this dashboard is derived from your total capital using the formula shown. This panel lets you verify the arithmetic without reading code.
+      All amounts scale proportionally if you change the total capital in the header.
+    </p>
+
+    <!-- Capital Stack Reconciliation -->
+    <h3 style="font-size:.875rem;margin-bottom:6px">Capital Stack — does everything add up to ${fmt(T)}?</h3>
+    <div style="overflow-x:auto;margin-bottom:16px">
+      <table style="border-collapse:collapse;width:100%">
+        <thead><tr style="border-bottom:1.5px solid var(--border)">
+          <th style="text-align:left;padding:4px 10px 4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Component</th>
+          <th style="text-align:left;padding:4px 10px 4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Formula</th>
+          <th style="text-align:left;padding:4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Amount</th>
+          <th style="text-align:left;padding:4px 0 4px 10px;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Note</th>
+        </tr></thead>
+        <tbody>
+          ${row('Month 0 lump sum', '150/300 × T', m0Total, 'Initial investment — 50% of capital on Day 1')}
+          ${row('Scheduled monthly buys', '54/300 × T', dcaTotal, '~€3k/month × 18 months (slight rounding artefact)')}
+          ${row('Opportunistic buy reserve', '81/300 × T', trigTotal, 'Held back for drawdown triggers (−10% to −48%)')}
+          ${row('Completion reserve', '15/300 × T', compRes, 'Deploy in Month 18 to top up base target allocations')}
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--border)">
+          <td colspan="2" style="padding:6px 10px 6px 0;font-weight:700">Total</td>
+          <td style="padding:6px 0;font-weight:700;color:${stackOk?'var(--success)':'var(--danger)'}">${fmt(stackSum)} ${stackOk?'✓':'⚠ CHECK'}</td>
+          <td style="padding:6px 0 6px 10px;font-size:.75rem;color:${stackOk?'var(--success)':'var(--danger)'}">${stackOk?`Matches ${fmt(T)} ✓`:`Discrepancy: ${fmt(Math.abs(stackSum-T))}`}</td>
+        </tr></tfoot>
+      </table>
+    </div>
+
+    <!-- Month 0 breakdown -->
+    <h3 style="font-size:.875rem;margin-bottom:6px">Month 0 — Initial Investment Breakdown</h3>
+    <div style="overflow-x:auto;margin-bottom:16px">
+      <table style="border-collapse:collapse;width:100%">
+        <thead><tr style="border-bottom:1.5px solid var(--border)">
+          <th style="text-align:left;padding:4px 10px 4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Asset</th>
+          <th style="text-align:left;padding:4px 10px 4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Formula</th>
+          <th style="text-align:left;padding:4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Amount</th>
+          <th style="text-align:left;padding:4px 0 4px 10px;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">% of M0</th>
+        </tr></thead>
+        <tbody>
+          ${ASSETS.map(a => {
+            const v = C.month0Buys[a]; const f = PLAN.month0Frac[a];
+            return row(a, `${(f*300).toFixed(1)}/300 × T`, v, `${m0Total>0?(v/m0Total*100).toFixed(1):'—'}% of M0`);
+          }).join('')}
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--border)">
+          <td colspan="2" style="padding:6px 10px 6px 0;font-weight:700">Total</td>
+          <td style="padding:6px 0;font-weight:700;color:var(--success)">${fmt(m0Total)} ✓</td>
+          <td style="padding:6px 0 6px 10px;font-size:.75rem;color:var(--muted)">= 50% of ${fmt(T)}</td>
+        </tr></tfoot>
+      </table>
+    </div>
+
+    <!-- DCA breakdown -->
+    <h3 style="font-size:.875rem;margin-bottom:6px">Monthly Buy — Per-Asset Amounts</h3>
+    <div style="overflow-x:auto;margin-bottom:16px">
+      <table style="border-collapse:collapse;width:100%">
+        <thead><tr style="border-bottom:1.5px solid var(--border)">
+          <th style="text-align:left;padding:4px 10px 4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Asset</th>
+          <th style="text-align:left;padding:4px 10px 4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Formula</th>
+          <th style="text-align:left;padding:4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Per Month</th>
+          <th style="text-align:left;padding:4px 0 4px 10px;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">× 18 months</th>
+        </tr></thead>
+        <tbody>
+          ${DCA_ASSETS.map(a => {
+            const v = C.monthlyDCA[a]; const f = PLAN.dcaFrac[a];
+            return row(a, `${(f*300).toFixed(3)}/300 × T`, v, fmt(v*18));
+          }).join('')}
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--border)">
+          <td colspan="2" style="padding:6px 10px 6px 0;font-weight:700">Total/month</td>
+          <td style="padding:6px 0;font-weight:700">${fmt(dcaMonth)}</td>
+          <td style="padding:6px 0 6px 10px;font-size:.75rem;color:var(--muted)">${fmt(dcaMonth*18)} over 18 months</td>
+        </tr></tfoot>
+      </table>
+    </div>
+
+    <!-- Trigger tranches -->
+    <h3 style="font-size:.875rem;margin-bottom:6px">Opportunistic Buy Triggers — Deployment Amounts</h3>
+    <div style="overflow-x:auto;margin-bottom:16px">
+      <table style="border-collapse:collapse;width:100%">
+        <thead><tr style="border-bottom:1.5px solid var(--border)">
+          <th style="text-align:left;padding:4px 10px 4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Threshold</th>
+          <th style="text-align:left;padding:4px 10px 4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Total</th>
+          <th style="text-align:left;padding:4px 10px 4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">VWCE (87.5%)</th>
+          <th style="text-align:left;padding:4px 0 4px 10px;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">XDW0 (12.5%)</th>
+        </tr></thead>
+        <tbody>
+          ${PLAN.triggers.map((pt,i) => {
+            const t = C.triggers[i];
+            return `<tr>
+              <td style="padding:4px 10px 4px 0;font-weight:600">${t.threshold}%${pt.pivot?' ⚡':''}</td>
+              <td style="padding:4px 10px 4px 0">${(pt.frac*300).toFixed(2)}/300 × T = <strong>${fmt(t.total)}</strong></td>
+              <td style="padding:4px 10px 4px 0;color:var(--accent)">${(pt.vf*300).toFixed(3)}/300 × T = ${fmt(t.VWCE)}</td>
+              <td style="padding:4px 0 4px 10px;color:var(--muted)">${(pt.xf*300).toFixed(3)}/300 × T = ${fmt(t.XDW0)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--border)">
+          <td style="padding:6px 10px 6px 0;font-weight:700">Pool total</td>
+          <td style="padding:6px 10px 6px 0;font-weight:700;color:var(--success)">81/300 × T = ${fmt(C.drawdownReserve)} ✓</td>
+          <td colspan="2" style="padding:6px 0 6px 10px;font-size:.75rem;color:var(--muted)">Sum of all tranches</td>
+        </tr></tfoot>
+      </table>
+    </div>
+
+    <!-- Base targets -->
+    <h3 style="font-size:.875rem;margin-bottom:6px">Final Base Targets — Full Deployment State</h3>
+    <div style="overflow-x:auto;margin-bottom:8px">
+      <table style="border-collapse:collapse;width:100%">
+        <thead><tr style="border-bottom:1.5px solid var(--border)">
+          <th style="text-align:left;padding:4px 10px 4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Asset</th>
+          <th style="text-align:left;padding:4px 10px 4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Target %</th>
+          <th style="text-align:left;padding:4px 0;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Target Amount</th>
+        </tr></thead>
+        <tbody>
+          ${ASSETS.map(a => {
+            const pct = (PLAN.targetFrac[a]*100).toFixed(1);
+            return `<tr><td style="padding:4px 10px 4px 0;font-weight:600">${a}</td>
+              <td style="padding:4px 10px 4px 0;color:var(--muted)">${pct}%</td>
+              <td style="padding:4px 0;font-weight:600">${fmt(C.baseTargets[a])}</td></tr>`;
+          }).join('')}
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--border)">
+          <td style="padding:6px 10px 6px 0;font-weight:700">Total</td>
+          <td style="padding:6px 10px 6px 0;font-weight:700;color:${targetOk?'var(--success)':'var(--danger)'}">100%</td>
+          <td style="padding:6px 0;font-weight:700;color:${targetOk?'var(--success)':'var(--danger)'}">${fmt(targetSum)} ${targetOk?'✓':'⚠'}</td>
+        </tr></tfoot>
+      </table>
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);line-height:1.5">⚡ = Deep-crash pivot activates at this trigger. All amounts auto-scale if you change the total capital. Rounding means the monthly DCA total is ~€53,982 not exactly €54,000 — the €18 shortfall is absorbed by the completion reserve.</div>
+  `;
+}
+
+// ── Asset Guide ───────────────────────────────────────────────────
+function renderAssetGuide() {
+  const el = document.getElementById('asset-guide');
+  if (!el) return;
+
+  // Cards HTML
+  const cards = ASSETS.map(a => {
+    const g = ASSET_GUIDE[a];
+    const tgt = C.baseTargets[a];
+    const pct = C.totalCapital > 0 ? (tgt/C.totalCapital*100).toFixed(1) : '—';
+    const charList = g.chars.map(c=>`<li style="margin-bottom:2px">${c}</li>`).join('');
+    return `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px 16px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="width:12px;height:12px;border-radius:3px;background:${g.color};flex-shrink:0;display:inline-block"></span>
+          <strong style="font-size:.9375rem">${a}</strong>
+          <span style="font-size:.75rem;color:var(--muted);margin-left:auto">${pct}% · ${fmt(tgt)}</span>
+        </div>
+        <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px;font-style:italic">${g.full}</div>
+        <div style="font-size:.8125rem;font-weight:600;color:var(--accent);margin-bottom:4px">${g.role}</div>
+        <div style="font-size:.8125rem;line-height:1.55;margin-bottom:8px;color:var(--text)">${g.what}</div>
+        <div style="font-size:.8125rem;line-height:1.55;margin-bottom:8px;color:var(--muted)">${g.why}</div>
+        <ul style="font-size:.75rem;color:var(--muted);padding-left:16px;margin:0">${charList}</ul>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="margin-bottom:12px">
+      <div style="font-size:.8125rem;color:var(--muted);margin-bottom:10px">
+        The chart below shows approximate annual returns for each asset (2019–2024). Data is illustrative — sourced from public indices. Past performance does not predict future returns.
+      </div>
+      <div style="position:relative;height:280px"><canvas id="guide-canvas"></canvas></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px">
+      ${cards}
+    </div>
+  `;
+
+  // Build Chart.js grouped bar chart
+  requestAnimationFrame(() => {
+    const canvas = document.getElementById('guide-canvas');
+    if (!canvas) return;
+    if (guideChart) { guideChart.destroy(); guideChart = null; }
+    guideChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: GUIDE_YEARS,
+        datasets: ASSETS.map(a => ({
+          label: a,
+          data: ASSET_GUIDE[a].returns,
+          backgroundColor: ASSET_GUIDE[a].color + 'cc',
+          borderColor: ASSET_GUIDE[a].color,
+          borderWidth: 1
+        }))
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { font: {size:11}, boxWidth:12 } },
+          tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw > 0 ? '+' : ''}${ctx.raw}%` } }
+        },
+        scales: {
+          x: { ticks: { font:{size:10} }, grid: { color:'#f0f0ee' } },
+          y: {
+            ticks: { callback: v => v+'%', font:{size:10} },
+            grid: { color:'#f0f0ee' },
+            title: { display:true, text:'Annual return (%)', font:{size:10} }
+          }
+        }
+      }
+    });
+  });
+}
+
+// ── Price Tracker ─────────────────────────────────────────────────
+function renderPriceTracker() {
+  const el = document.getElementById('price-tracker');
+  if (!el) return;
+
+  const dd    = getDrawdownPct();
+  const athDD = getATHDrawdownPct();
+  const sl    = parseFloat(S.startLevel);
+  const cl    = parseFloat(S.currentLevel);
+  const ath   = parseFloat(S.athLevel);
+  const ddSet = (S.manualDrawdown!==''&&S.manualDrawdown!=null) || (sl>0 && cl>0);
+
+  // Colour helper
+  const ddColor = v => v <= -30 ? 'var(--danger)' : v <= -10 ? 'var(--warn)' : v < 0 ? 'var(--text)' : 'var(--success)';
+
+  // Which triggers are relevant given current DD
+  const firedTriggers = C.triggers.filter(t => ddSet && dd <= t.threshold && !S.triggersExecuted[String(t.threshold)]);
+  const nextTrigger   = C.triggers.find(t  => ddSet && dd > t.threshold && !S.triggersExecuted[String(t.threshold)]);
+
+  // Proximity bar to next trigger (how close are we?)
+  let proximityBar = '';
+  if (ddSet && nextTrigger && dd < 0) {
+    const pct = Math.min(100, Math.abs(dd) / Math.abs(nextTrigger.threshold) * 100);
+    proximityBar = `
+      <div style="margin-top:6px">
+        <div style="font-size:.6875rem;color:var(--muted);margin-bottom:3px">
+          Distance to next trigger (${nextTrigger.threshold}%): ${fmtP(nextTrigger.threshold - dd)} remaining
+        </div>
+        <div class="gap-bar"><div class="gap-fill" style="width:${pct}%;background:${pct>80?'var(--danger)':pct>50?'var(--warn)':'var(--accent)'}"></div></div>
+      </div>`;
+  }
+
+  // Collapsible inputs — collapsed by default once startLevel is set
+  const configDone = !!(sl > 0 || (S.manualDrawdown !== '' && S.manualDrawdown != null));
+  const collapsed = configDone && (S.priceTrackerCollapsed === true);
+
+  // Price staleness indicator
+  const priceAge = S.lastPriceUpdatedAt ? Math.floor((Date.now() - S.lastPriceUpdatedAt) / 86400000) : null;
+  const priceAgeLabel = priceAge === null ? '' : priceAge === 0 ? ' · updated today' : ` · updated ${priceAge}d ago`;
+  const priceAgeStyle = priceAge !== null && priceAge > 7 ? 'color:var(--warn);font-weight:600' : 'color:var(--muted)';
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${collapsed?'0':'10px'}">
+      ${configDone ? `<button data-action="toggle-price-tracker" class="btn sm">${collapsed?'▶ Edit levels':'▼ Done editing'}</button>` : '<span></span>'}
+      ${priceAge !== null ? `<span style="font-size:.6875rem;${priceAgeStyle}">${priceAge > 7 ? '⚠' : '✓'} S&amp;P 500${priceAgeLabel}</span>` : ''}
+    </div>
+    <div id="price-inputs" style="display:${collapsed?'none':'block'}">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;align-items:start">
+
+      <!-- ── Left: level inputs ── -->
+      <div>
+        <div style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">S&amp;P 500 Levels</div>
+
+        <div class="inp-row">
+          <label style="width:190px">Day 1 of plan (start reference)</label>
+          <div style="display:flex;align-items:center;gap:4px">
+            <input type="number" step="0.01" value="${S.startLevel||''}" data-action="set-startlevel"
+              placeholder="e.g. 5800" style="width:110px">
+            <span style="font-size:.75rem;color:var(--muted)">pts</span>
+          </div>
+        </div>
+        <div style="font-size:.6875rem;color:var(--muted);margin:-4px 0 10px 200px;line-height:1.4">
+          Set once on Day 1 of the plan. All drawdown triggers are measured from this level.
+        </div>
+
+        <div class="inp-row">
+          <label style="width:190px">Current level (update when checking)</label>
+          <div style="display:flex;align-items:center;gap:4px">
+            <input type="number" step="0.01" value="${S.currentLevel||''}" data-action="set-currentlevel"
+              placeholder="Today's S&P 500" style="width:110px">
+            <span style="font-size:.75rem;color:var(--muted)">pts</span>
+          </div>
+        </div>
+        <div style="font-size:.6875rem;color:var(--muted);margin:-4px 0 10px 200px;line-height:1.4">
+          Look up the current S&amp;P 500 level (e.g. on Google or Yahoo Finance) and enter it here.
+        </div>
+
+        <div class="inp-row">
+          <label style="width:190px">All-time high (optional context)</label>
+          <div style="display:flex;align-items:center;gap:4px">
+            <input type="number" step="0.01" value="${S.athLevel||''}" data-action="set-athlevel"
+              placeholder="e.g. 6100" style="width:110px">
+            <span style="font-size:.75rem;color:var(--muted)">pts</span>
+          </div>
+        </div>
+        <div style="font-size:.6875rem;color:var(--muted);margin:-4px 0 10px 200px;line-height:1.4">
+          For context only — not used for trigger logic. Lets you see both metrics side by side.
+        </div>
+
+        <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px">
+          <div class="inp-row" style="margin-bottom:2px">
+            <label style="width:190px">Or: enter market drop % directly</label>
+            <div style="display:flex;align-items:center;gap:4px">
+              <input type="number" step="0.1" min="-100" max="100" value="${S.manualDrawdown||''}" data-action="set-manual-dd"
+                placeholder="e.g. -22" style="width:110px">
+              <span style="font-size:.75rem;color:var(--muted)">%</span>
+            </div>
+          </div>
+          <div style="font-size:.6875rem;color:var(--muted);margin-left:200px;line-height:1.4">Use this if you just want to quickly test a scenario. Overrides the level-based calculation above.</div>
+        </div>
+        <div style="margin-top:12px;padding:10px 12px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;font-size:.75rem;color:#78350f;line-height:1.55">
+          <strong>Why S&P 500?</strong> Your portfolio holds VWCE (global equities, ~65% US) and XDW0 (energy). S&P 500 is a close proxy — the two typically move together, with 90–95% correlation in <em>local currency</em> terms. A trigger at −10% S&P 500 roughly corresponds to −8% to −12% on VWCE.<br><br>
+          <strong>⚠ EUR/USD caveat:</strong> This correlation assumes a relatively stable EUR/USD rate. If the EUR strengthens significantly against the USD (more than ~5%), VWCE in EUR can fall while the S&P 500 in USD shows little drop — and vice versa. In periods of large currency moves, check <strong>VWCE.DE directly on Xetra or Yahoo Finance</strong> and use that level instead of the S&P 500 proxy.
+        </div>
+      </div>
+
+      <!-- ── Right: computed metrics ── -->
+      <div id="price-metrics">
+        <div style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Computed Drawdown</div>
+
+        ${!ddSet ? `
+          <div style="padding:16px;background:var(--bg);border:1px dashed var(--border);border-radius:8px;text-align:center;color:var(--muted);font-size:.8125rem">
+            Enter your Day 1 level and current level on the left to calculate drawdown.
+          </div>
+        ` : `
+          <!-- Primary metric: from plan start -->
+          <div style="background:${dd<=-30?'#fef2f2':dd<=-10?'#fffbeb':'#f0fdf4'};border:1px solid ${dd<=-30?'#fca5a5':dd<=-10?'#fcd34d':'#86efac'};border-radius:8px;padding:12px 14px;margin-bottom:8px">
+            <div style="font-size:.6875rem;color:var(--muted);margin-bottom:2px">From your plan start (Day 1)</div>
+            <div style="font-size:2rem;font-weight:800;line-height:1;color:${ddColor(dd)}">${fmtP(dd)}</div>
+            <div style="font-size:.75rem;margin-top:4px;color:var(--muted)">
+              ${sl>0&&cl>0 ? `S&P: ${sl.toLocaleString()} → ${cl.toLocaleString()}` : 'From manual override'}
+            </div>
+            <div style="font-size:.8125rem;font-weight:600;margin-top:4px;color:${ddColor(dd)}">
+              ${dd<=-30 ? '⚡ Deep-crash pivot active — redirect all remaining capital to VWCE/XDW0'
+                : dd<=-10 ? '⚠ In trigger zone — check ladder below'
+                : dd<0 ? '↓ Below start level — no trigger yet'
+                : '✓ Above start level — no drawdown'}
+            </div>
+            ${proximityBar}
+          </div>
+
+          ${/* ATH metric (optional) */''}
+          ${athDD !== null ? `
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px">
+              <div style="font-size:.6875rem;color:var(--muted);margin-bottom:2px">From all-time high (context only)</div>
+              <div style="font-size:1.5rem;font-weight:700;line-height:1;color:${ddColor(athDD)}">${fmtP(athDD)}</div>
+              <div style="font-size:.75rem;margin-top:4px;color:var(--muted)">ATH: ${ath.toLocaleString()} → now: ${cl.toLocaleString()}</div>
+              <div style="font-size:.6875rem;margin-top:4px;color:var(--subtle);font-style:italic">Note: your triggers fire based on your Day 1 level, not ATH.</div>
+            </div>
+          ` : ''}
+
+          ${firedTriggers.length>0 ? `
+            <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px">
+              <div style="font-weight:600;color:var(--danger);font-size:.875rem;margin-bottom:4px">⚡ ${firedTriggers.length} trigger${firedTriggers.length>1?'s':''} fired — action required</div>
+              ${firedTriggers.map(t=>`<div style="font-size:.8125rem;color:var(--text)">${t.threshold}%: deploy ${fmt(t.total)} → ${fmt(t.VWCE)} VWCE + ${fmt(t.XDW0)} XDW0</div>`).join('')}
+            </div>
+          ` : ''}
+        `}
+      </div>
+    </div>
+    </div><!-- /price-inputs -->
+
+    ${collapsed && ddSet ? `
+      <div style="display:flex;align-items:center;gap:16px;padding:4px 0;flex-wrap:wrap">
+        <div style="font-size:1.1rem;font-weight:700;color:${ddColor(dd)}">${fmtP(dd)}</div>
+        <div style="font-size:.8125rem;color:var(--muted)">from your plan start ${sl>0&&cl>0?`(${sl.toLocaleString()} → ${cl.toLocaleString()})`:''}</div>
+        ${firedTriggers.length > 0 ? `<span style="font-size:.8125rem;font-weight:600;color:var(--danger)">⚡ ${firedTriggers.length} trigger${firedTriggers.length>1?'s':''} fired</span>` : ''}
+      </div>` : ''}
+  `;
+}
+
+function renderAllocLegend() {
+  const el = document.getElementById('alloc-legend');
+  if (!el) return;
+  const vb = S.viewBy || 'asset';
+  const items = vb === 'category'
+    ? [['Global Equities','#2563eb'],['Energy Equities','#0ea5e9'],['Defensive','#059669'],['Real Assets','#d97706'],['Staging Reserve','#8b5cf6']]
+    : [...ASSETS.map(a=>[a,ASSET_COLORS[a]]),['Staging Reserve','#8b5cf6']];
+  el.innerHTML = items.map(([l,c])=>`<div class="leg-item"><span class="dot-chip" style="background:${c}"></span>${l}</div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 12. EVENT DELEGATION
+// ══════════════════════════════════════════════════════════════════
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const action = el.dataset.action;
+
+  if (action === 'mark-month0') {
+    const b = C.month0Buys;
+    const total = Object.values(b).reduce((s,v)=>s+v,0);
+    if (!confirm(`Mark initial investment as complete?\n\nThis records ${fmt(total)} deployed across all assets.\n\nHave you completed this investment in your brokerage?`)) return;
+    markMonth0();
+  }
+  else if (action === 'mark-dca') {
+    const m = parseInt(el.dataset.month);
+    const d = C.monthlyDCA;
+    const total = Object.values(d).reduce((s,v)=>s+v,0);
+    if (!confirm(`Mark Month ${m} monthly buy as complete?\n\nThis records ${fmt(total)} deployed.\n\nHave you completed this buy in your brokerage?`)) return;
+    markDCA(m);
+  }
+  else if (action === 'execute-trigger') { executeTrigger(parseInt(el.dataset.threshold)); }
+  else if (action === 'set-view')    { setState({activeView: el.dataset.view}); }
+  else if (action === 'set-viewby')  { setState({viewBy: el.dataset.viewby}); }
+  else if (action === 'set-scenario'){ setState({activeScenario: el.dataset.scenario}); }
+  else if (action === 'clear-txns')     { setState({transactions:[]}); }
+  else if (action === 'set-month-auto') { setState({currentMonth: parseInt(el.dataset.month)||0}); toast(`Month updated to ${el.dataset.month} ✓`); }
+  else if (action === 'toggle-price-tracker') {
+    setState({priceTrackerCollapsed: S.priceTrackerCollapsed !== true});  // true→false (expand), false/undefined→true (collapse)
+  }
+  else if (action === 'reset-state') {
+    if (confirm('Reset all state? This cannot be undone.')) { S = {...DEFAULT_STATE}; C = deriveConfig(300000); saveState(); render(); }
+  }
+  else if (action === 'dl-status') {
+    setState({lastExportedAt: Date.now()});
+    download('portfolio-status.json', JSON.stringify({config:C,state:S,exportedAt:new Date().toISOString()},null,2));
+    toast('Exported ✓ — keep this file somewhere safe');
+  }
+  else if (action === 'dl-config') {
+    download('portfolio-config.json', JSON.stringify(C,null,2));
+  }
+  else if (action === 'mark-monitor-done') {
+    setState({monitorTaskUpdated: true});
+    toast('Monitoring task confirmed ✓ — daily email alerts are now active');
+  }
+  else if (action === 'copy-start-level') {
+    const lvl = S.startLevel;
+    if (!lvl) { toast('No start level set yet', 3000); return; }
+    navigator.clipboard.writeText(String(lvl))
+      .then(() => toast('Start level ' + lvl + ' copied to clipboard ✓'))
+      .catch(() => toast('Copy failed — your start level is: ' + lvl, 6000));
+  }
+  else if (action === 'recover-backup') {
+    recoverFromBackup();
+  }
+  else if (action === 'toggle-detail-section') {
+    const sec = el.dataset.section;
+    const nowCollapsed = !isSecCollapsed(sec);
+    setState({detailSectionCollapsed: {...(S.detailSectionCollapsed||{}), [sec]: nowCollapsed}});
+    // When expanding holdings, re-render chart (canvas enters the DOM)
+    if (sec === 'holdings' && !nowCollapsed) {
+      requestAnimationFrame(() => { renderAllocationChart(); renderAllocLegend(); });
+    }
+  }
+  else if (action === 'clear-pivot-flag') {
+    setState({deepCrashPivotActivated: false});
+    toast('Deep-crash recovery acknowledged ✓ — resume IBCI/ERNX/CMOE/SGLD DCA gradually');
+  }
+});
+
+document.addEventListener('change', e => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const action = el.dataset.action;
+  const val = el.value;
+
+  if (action === 'set-capital') {
+    const T = parseInt(val);
+    const prevT = S.totalCapital || 300000;
+    if (T >= 10000) {
+      const changePct = Math.abs(T - prevT) / prevT * 100;
+      if (changePct > 20) {
+        if (!confirm(`Change total capital from €${prevT.toLocaleString('en-IE')} to €${T.toLocaleString('en-IE')}?\n\nThis rescales every plan target, DCA amount, and trigger tranche proportionally.\nAlready-marked holdings are NOT adjusted — only plan targets update.\n\nAre you sure?`)) {
+          el.value = prevT;  // revert the input
+          return;
+        }
+      }
+      setState({totalCapital:T});
+    }
+  }
+  else if (action === 'set-month')      { setState({currentMonth: parseInt(val)||0}); }
+  else if (action === 'set-startdate')  { setState({startDate: val}); }
+  else if (action === 'set-startlevel') {
+    const v = parseFloat(val);
+    if (val && !isNaN(v) && v > 0 && v < 500) toast('⚠ That level seems low for S&P 500 (typical range: 1,000–8,000). Double-check before saving.', 6000);
+    setState({startLevel: val, manualDrawdown:''});
+    if (val && parseFloat(val) > 500 && !S.monitorTaskUpdated) {
+      toast('Start level saved. Remember to update your daily monitoring task (portfolio-sp500-monitor) with this value to activate email alerts.', 7000);
+    }
+  }
+  else if (action === 'set-athlevel')   { setState({athLevel: val}); }
+  else if (action === 'set-currentlevel') {
+    const prevDD = getDrawdownPct();
+    setState({currentLevel: val, manualDrawdown:'', lastPriceUpdatedAt: Date.now()});
+    const newDD = getDrawdownPct();
+    if (newDD !== prevDD) checkAndAlertTriggers(prevDD, newDD);
+    // Latch deep-crash pivot flag when market crosses −30%
+    if (newDD <= -30 && !S.deepCrashPivotActivated) setState({deepCrashPivotActivated: true});
+  }
+  else if (action === 'set-manual-dd') {
+    const prevDD = getDrawdownPct();
+    setState({manualDrawdown: val, lastPriceUpdatedAt: Date.now()});
+    const newDD = getDrawdownPct();
+    if (newDD !== prevDD) checkAndAlertTriggers(prevDD, newDD);
+    if (newDD <= -30 && !S.deepCrashPivotActivated) setState({deepCrashPivotActivated: true});
+  }
+  else if (action === 'set-holding') {
+    const h = {...S.holdings, [el.dataset.asset]: parseFloat(val)||0};
+    setState({holdings:h});
+  }
+  else if (action === 'set-dca-day')    { setState({dcaDay: parseInt(val)||null}); }
+  else if (action === 'set-marketvalue') {
+    const mv = {...(S.marketValues||{}), [el.dataset.asset]: parseFloat(val)||0};
+    setState({marketValues: mv});
+  }
+  else if (action === 'set-notes')      { S.notes = val; saveState(); /* no full re-render */ }
+});
+
+// ══════════════════════════════════════════════════════════════════
+// 13. IMPORT / EXPORT
+// ══════════════════════════════════════════════════════════════════
+function download(filename, content) {
+  const blob = new Blob([content], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJSON() {
+  const input = document.createElement('input');
+  input.type='file'; input.accept='.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.state) { Object.assign(S, data.state); }
+        else { Object.assign(S, data); }
+        if (data.config?.totalCapital) S.totalCapital = data.config.totalCapital;
+        C = deriveConfig(S.totalCapital||300000);
+        saveState(); render();
+        toast('Imported successfully ✓');
+      } catch { toast('Invalid JSON file', 4000); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 14. INIT
+// ══════════════════════════════════════════════════════════════════
+document.getElementById('root').innerHTML = `
+  <div id="hdr" class="hdr"></div>
+  <div id="banners"></div>
+  <div id="tab-area"></div>
+  <div id="summary-cards"></div>
+  <div id="view-content"></div>
+  <div style="text-align:center;padding:20px 0;color:var(--subtle);font-size:.6875rem">
+    18-Month Portfolio Deployment Dashboard · Progress saved automatically · Enter S&amp;P 500 levels in the Price Tracker to monitor your buy triggers
+  </div>
+`;
+
+loadState();
+render();
+</script>
+</body>
+</html>

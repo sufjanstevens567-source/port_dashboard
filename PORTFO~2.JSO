@@ -1,0 +1,120 @@
+{
+  "_description": "Sample saved state — Month 4 in progress. Month 0 and DCA months 1–3 complete. -10% trigger has fired and been executed. -20% trigger fired but NOT yet executed (action required).",
+  "config": {
+    "totalCapital": 300000,
+    "startDate": "2025-01-15",
+    "triggerReference": { "type": "price", "startLevel": 110.50, "currentLevel": 88.20 },
+    "baseTargets": {
+      "VWCE": 105000, "XDW0": 15000, "IBCI": 37500,
+      "ERNX": 52500, "Cash": 15000, "CMOE": 37500, "SGLD": 37500
+    },
+    "month0Buys": {
+      "VWCE": 25000, "XDW0": 3500, "IBCI": 25000,
+      "ERNX": 35000, "Cash": 15000, "CMOE": 18000, "SGLD": 28500
+    },
+    "monthlyDCA": {
+      "months": 18,
+      "monthlyTotal": 3000,
+      "buys": {
+        "VWCE": 1250, "XDW0": 250, "IBCI": 333,
+        "ERNX": 500, "CMOE": 333, "SGLD": 333
+      }
+    },
+    "drawdownTriggers": [
+      { "threshold": -10, "total": 10000, "buys": { "VWCE": 8750, "XDW0": 1250 } },
+      { "threshold": -20, "total": 14000, "buys": { "VWCE": 12250, "XDW0": 1750 } },
+      { "threshold": -30, "total": 15000, "buys": { "VWCE": 13125, "XDW0": 1875 }, "activatesDeepCrashPivot": true },
+      { "threshold": -40, "total": 20000, "buys": { "VWCE": 17500, "XDW0": 2500 } },
+      { "threshold": -48, "total": 22000, "buys": { "VWCE": 19250, "XDW0": 2750 } }
+    ],
+    "completionReserve": {
+      "amount": 15000,
+      "noCrashUse": "completeBaseTargetByMonth18",
+      "deepCrashUse": "redirectToVWCE_XDW0"
+    },
+    "rules": {
+      "fullyAllocatedByMonth": 18,
+      "noPermanentOpportunisticReserve": true,
+      "deepCrashPivotThreshold": -30
+    }
+  },
+  "state": {
+    "currentMonth": 4,
+    "startDate": "2025-01-15",
+    "startLevel": 110.50,
+    "currentLevel": 88.20,
+    "manualDrawdown": null,
+    "_derivedDrawdown": "-20.2% (from price levels: (88.20 - 110.50) / 110.50)",
+    "month0Complete": true,
+    "dcaCompleted": {
+      "1": true,
+      "2": true,
+      "3": true,
+      "4": false
+    },
+    "triggersExecuted": {
+      "-10": { "date": "2025-03-08", "note": "Executed at VWCE price ~99.45. Bought €8,750 VWCE + €1,250 XDW0." }
+    },
+    "_triggerStatus": {
+      "-10": "COMPLETED",
+      "-20": "FIRED — ACTION REQUIRED (current drawdown -20.2%, threshold -20% reached)",
+      "-30": "WAITING",
+      "-40": "WAITING",
+      "-48": "WAITING"
+    },
+    "holdings": {
+      "VWCE": 43750,
+      "XDW0": 6250,
+      "IBCI": 25999,
+      "ERNX": 36500,
+      "Cash": 15000,
+      "CMOE": 18999,
+      "SGLD": 29499
+    },
+    "_holdingNotes": {
+      "VWCE": "25000 (M0) + 3×1250 (DCA M1-3) + 8750 (trigger -10%) = 43750",
+      "XDW0": "3500 (M0) + 3×250 (DCA M1-3) + 1250 (trigger -10%) = 6250",
+      "IBCI": "25000 (M0) + 3×333 (DCA M1-3) = 25999",
+      "ERNX": "35000 (M0) + 3×500 (DCA M1-3) = 36500",
+      "Cash": "15000 (M0) = 15000 — PERMANENT CASH, NOT STAGING RESERVE",
+      "CMOE": "18000 (M0) + 3×333 (DCA M1-3) = 18999",
+      "SGLD": "28500 (M0) + 3×333 (DCA M1-3) = 29499"
+    },
+    "_totalInvested": 174997,
+    "_stagingRemaining": 125003,
+    "transactions": [
+      {
+        "date": "15/01/2025",
+        "type": "month0",
+        "desc": "Month 0 initial investment — all assets",
+        "amount": 150000
+      },
+      {
+        "date": "15/02/2025",
+        "type": "dca",
+        "desc": "Month 1 DCA — VWCE/XDW0/IBCI/ERNX/CMOE/SGLD",
+        "amount": 2999
+      },
+      {
+        "date": "15/03/2025",
+        "type": "dca",
+        "desc": "Month 2 DCA — VWCE/XDW0/IBCI/ERNX/CMOE/SGLD",
+        "amount": 2999
+      },
+      {
+        "date": "08/03/2025",
+        "type": "trigger",
+        "desc": "Drawdown trigger -10% executed — VWCE + XDW0",
+        "amount": 10000
+      },
+      {
+        "date": "15/04/2025",
+        "type": "dca",
+        "desc": "Month 3 DCA — VWCE/XDW0/IBCI/ERNX/CMOE/SGLD",
+        "amount": 2999
+      }
+    ],
+    "notes": "Started plan Jan 2025. VWCE dropped sharply in Feb-Mar 2025. Executed -10% trigger on 8 March. Market continued falling — -20% trigger has now fired as of ~10 May. Need to execute €14,000 deployment (€12,250 VWCE + €1,750 XDW0) urgently. Month 4 DCA also due this month.",
+    "exportedAt": "2025-05-25T10:00:00.000Z"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "totalCapital": 300000,
+  "startDate": null,
+  "triggerReference": {
+    "type": "manual",
+    "startLevel": null,
+    "currentLevel": null
+  },
+  "baseTargets": {
+    "VWCE": 105000,
+    "XDW0": 15000,
+    "IBCI": 37500,
+    "ERNX": 52500,
+    "Cash": 15000,
+    "CMOE": 37500,
+    "SGLD": 37500
+  },
+  "month0Buys": {
+    "VWCE": 25000,
+    "XDW0": 3500,
+    "IBCI": 25000,
+    "ERNX": 35000,
+    "Cash": 15000,
+    "CMOE": 18000,
+    "SGLD": 28500
+  },
+  "monthlyDCA": {
+    "months": 18,
+    "monthlyTotal": 3000,
+    "buys": {
+      "VWCE": 1250,
+      "XDW0": 250,
+      "IBCI": 333,
+      "ERNX": 500,
+      "CMOE": 333,
+      "SGLD": 333
+    },
+    "_note": "Monthly total is actually €2,999 due to rounding (3×€333=€999). The €18 shortfall over 18 months is absorbed into the completion reserve."
+  },
+  "drawdownTriggers": [
+    {
+      "threshold": -10,
+      "total": 10000,
+      "buys": { "VWCE": 8750, "XDW0": 1250 }
+    },
+    {
+      "threshold": -20,
+      "total": 14000,
+      "buys": { "VWCE": 12250, "XDW0": 1750 }
+    },
+    {
+      "threshold": -30,
+      "total": 15000,
+      "buys": { "VWCE": 13125, "XDW0": 1875 },
+      "activatesDeepCrashPivot": true
+    },
+    {
+      "threshold": -40,
+      "total": 20000,
+      "buys": { "VWCE": 17500, "XDW0": 2500 }
+    },
+    {
+      "threshold": -48,
+      "total": 22000,
+      "buys": { "VWCE": 19250, "XDW0": 2750 }
+    }
+  ],
+  "completionReserve": {
+    "amount": 15000,
+    "noCrashUse": "completeBaseTargetByMonth18",
+    "deepCrashUse": "redirectToVWCE_XDW0"
+  },
+  "rules": {
+    "fullyAllocatedByMonth": 18,
+    "noPermanentOpportunisticReserve": true,
+    "deepCrashPivotThreshold": -30
+  },
+  "_stagingCapitalBreakdown": {
+    "scheduledDCA": 54000,
+    "equityDrawdownReserve": 81000,
+    "completionReserve": 15000,
+    "total": 150000
+  },
+  "_drawdownTriggerTotals": {
+    "totalTriggerCapital": 81000,
+    "VWCETotal": 70875,
+    "XDW0Total": 10125
+  }
+}
